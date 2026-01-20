@@ -131,11 +131,11 @@
   <script>
     // Get session ID from URL: /s/{sessionId}/draw or /draw
     const pathParts = window.location.pathname.split('/');
-    let sessionId = null;
+    let currentSessionId = null;
 
     // Check if URL has session ID: /s/{id}/draw
     if (pathParts[1] === 's' && pathParts[2]) {
-      sessionId = pathParts[2];
+      currentSessionId = pathParts[2];
     }
 
     let sessionData = null;
@@ -161,10 +161,10 @@
     init();
 
     async function init() {
-      // If we have a session ID in URL, load that session
-      if (sessionId) {
+      // If we have a session ID in URL, load that session and skip PIN entry
+      if (currentSessionId) {
         try {
-          const response = await fetch(`/api/session/${sessionId}`);
+          const response = await fetch(`/api/session/${currentSessionId}`);
           if (!response.ok) {
             throw new Error('Session not found');
           }
@@ -178,6 +178,12 @@
 
           document.getElementById('eventName').textContent = sessionData.eventName;
           document.title = `${sessionData.eventName} - Draw`;
+
+          // Session ID in URL means we're already authenticated - skip PIN entry
+          pinVerified = true;
+          showView('main');
+          updateState();
+          startPolling();
 
         } catch (err) {
           showError(err.message);
@@ -265,7 +271,7 @@
     async function verifyPin(pin) {
       try {
         // If no session ID in URL, the PIN is the session ID - redirect to proper URL
-        if (!sessionId) {
+        if (!currentSessionId) {
           // Verify session exists by checking status
           const checkResponse = await fetch(`/api/session/${pin}`);
           if (!checkResponse.ok) {
@@ -277,7 +283,7 @@
         }
 
         // Session ID in URL - verify PIN matches
-        const response = await fetch(`/api/session/${sessionId}/verify-pin`, {
+        const response = await fetch(`/api/session/${currentSessionId}/verify-pin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ pin })
@@ -333,7 +339,7 @@
     function startPolling() {
       pollInterval = setInterval(async () => {
         try {
-          const response = await fetch(`/api/session/${sessionId}`);
+          const response = await fetch(`/api/session/${currentSessionId}`);
           if (!response.ok) return;
 
           sessionData = await response.json();
@@ -349,7 +355,7 @@
       btn.disabled = true;
 
       try {
-        const response = await fetch(`/api/session/${sessionId}/lock`, {
+        const response = await fetch(`/api/session/${currentSessionId}/lock`, {
           method: 'POST'
         });
 
@@ -382,7 +388,7 @@
         playDrawingAnimation();
 
         // Fetch winner in parallel
-        const response = await fetch(`/api/session/${sessionId}/draw`, {
+        const response = await fetch(`/api/session/${currentSessionId}/draw`, {
           method: 'POST'
         });
 
@@ -557,7 +563,7 @@
       if (countdownInterval) clearInterval(countdownInterval);
 
       try {
-        const response = await fetch(`/api/session/${sessionId}/redraw`, {
+        const response = await fetch(`/api/session/${currentSessionId}/redraw`, {
           method: 'POST'
         });
 
@@ -582,7 +588,7 @@
       if (countdownInterval) clearInterval(countdownInterval);
 
       try {
-        const response = await fetch(`/api/session/${sessionId}/confirm-claim`, {
+        const response = await fetch(`/api/session/${currentSessionId}/confirm-claim`, {
           method: 'POST'
         });
 
@@ -592,7 +598,7 @@
         }
 
         // Refresh session data
-        const statusResponse = await fetch(`/api/session/${sessionId}`);
+        const statusResponse = await fetch(`/api/session/${currentSessionId}`);
         sessionData = await statusResponse.json();
 
         sessionData.currentWinner = null;
@@ -611,7 +617,7 @@
       }
 
       try {
-        const response = await fetch(`/api/session/${sessionId}/close`, {
+        const response = await fetch(`/api/session/${currentSessionId}/close`, {
           method: 'POST'
         });
 

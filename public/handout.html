@@ -118,11 +118,11 @@
   <script>
     // Get session ID from URL: /s/{sessionId}/handout or /handout
     const pathParts = window.location.pathname.split('/');
-    let sessionId = null;
+    let currentSessionId = null;
 
     // Check if URL has session ID: /s/{id}/handout
     if (pathParts[1] === 's' && pathParts[2]) {
-      sessionId = pathParts[2];
+      currentSessionId = pathParts[2];
     }
 
     let sessionData = null;
@@ -143,10 +143,10 @@
     init();
 
     async function init() {
-      // If we have a session ID in URL, load that session
-      if (sessionId) {
+      // If we have a session ID in URL, load that session and skip PIN entry
+      if (currentSessionId) {
         try {
-          const response = await fetch(`/api/session/${sessionId}`);
+          const response = await fetch(`/api/session/${currentSessionId}`);
           if (!response.ok) {
             throw new Error('Session not found');
           }
@@ -160,13 +160,18 @@
 
           // Update UI
           document.getElementById('eventName').textContent = sessionData.eventName;
-          document.getElementById('sessionId').textContent = `Session: ${sessionId}`;
+          document.getElementById('sessionId').textContent = `Session: ${currentSessionId}`;
           document.getElementById('qrEventName').textContent = sessionData.eventName;
           updateStats();
+
+          // Session ID in URL means we're already authenticated - skip PIN entry
+          pinVerified = true;
 
           // Check session state
           if (sessionData.state !== 'OPEN') {
             showView('closed');
+          } else {
+            showView('main');
           }
         } catch (err) {
           showError(err.message);
@@ -241,7 +246,7 @@
     async function verifyPin(pin) {
       try {
         // If no session ID in URL, the PIN is the session ID - redirect to proper URL
-        if (!sessionId) {
+        if (!currentSessionId) {
           // Verify session exists by checking status
           const checkResponse = await fetch(`/api/session/${pin}`);
           if (!checkResponse.ok) {
@@ -253,7 +258,7 @@
         }
 
         // Session ID in URL - verify PIN matches
-        const response = await fetch(`/api/session/${sessionId}/verify-pin`, {
+        const response = await fetch(`/api/session/${currentSessionId}/verify-pin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ pin })
@@ -307,7 +312,7 @@
       btn.disabled = true;
 
       try {
-        const response = await fetch(`/api/session/${sessionId}/batch`, {
+        const response = await fetch(`/api/session/${currentSessionId}/batch`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ticketCount, label: label || undefined })
@@ -357,7 +362,7 @@
     async function pollBatchStatus(batchId) {
       const interval = setInterval(async () => {
         try {
-          const response = await fetch(`/api/session/${sessionId}`);
+          const response = await fetch(`/api/session/${currentSessionId}`);
           if (!response.ok) return;
 
           const data = await response.json();
