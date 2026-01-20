@@ -129,9 +129,14 @@
 
   <script src="/i18n.js"></script>
   <script>
-    // Get session ID from URL
+    // Get session ID from URL: /s/{sessionId}/draw or /draw
     const pathParts = window.location.pathname.split('/');
-    const sessionId = pathParts[2];
+    let sessionId = null;
+
+    // Check if URL has session ID: /s/{id}/draw
+    if (pathParts[1] === 's' && pathParts[2]) {
+      sessionId = pathParts[2];
+    }
 
     let sessionData = null;
     let pinVerified = false;
@@ -156,24 +161,27 @@
     init();
 
     async function init() {
-      try {
-        const response = await fetch(`/api/session/${sessionId}`);
-        if (!response.ok) {
-          throw new Error('Session not found');
+      // If we have a session ID in URL, load that session
+      if (sessionId) {
+        try {
+          const response = await fetch(`/api/session/${sessionId}`);
+          if (!response.ok) {
+            throw new Error('Session not found');
+          }
+          sessionData = await response.json();
+          setLanguage(sessionData.language);
+
+          // Apply theme
+          if (sessionData.theme && sessionData.theme !== 'default') {
+            document.documentElement.setAttribute('data-theme', sessionData.theme);
+          }
+
+          document.getElementById('eventName').textContent = sessionData.eventName;
+          document.title = `${sessionData.eventName} - Draw`;
+
+        } catch (err) {
+          showError(err.message);
         }
-        sessionData = await response.json();
-        setLanguage(sessionData.language);
-
-        // Apply theme
-        if (sessionData.theme && sessionData.theme !== 'default') {
-          document.documentElement.setAttribute('data-theme', sessionData.theme);
-        }
-
-        document.getElementById('eventName').textContent = sessionData.eventName;
-        document.title = `${sessionData.eventName} - Draw`;
-
-      } catch (err) {
-        showError(err.message);
       }
 
       setupPinInputs();
@@ -256,6 +264,19 @@
 
     async function verifyPin(pin) {
       try {
+        // If no session ID in URL, the PIN is the session ID - redirect to proper URL
+        if (!sessionId) {
+          // Verify session exists by checking status
+          const checkResponse = await fetch(`/api/session/${pin}`);
+          if (!checkResponse.ok) {
+            throw new Error('Session not found');
+          }
+          // Session exists, redirect to the proper URL
+          window.location.href = `/s/${pin}/draw`;
+          return;
+        }
+
+        // Session ID in URL - verify PIN matches
         const response = await fetch(`/api/session/${sessionId}/verify-pin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -277,6 +298,8 @@
         }
       } catch (err) {
         pinError.textContent = err.message;
+        pinInputs.forEach(i => i.value = '');
+        pinInputs[0].focus();
         pinError.classList.remove('hidden');
       }
     }

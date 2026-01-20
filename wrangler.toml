@@ -13,7 +13,9 @@ class_name = "RaffleSession"
 tag = "v1"
 new_sqlite_classes = ["RaffleSession"]
 
-# Static assets
+# Static assets - let worker handle routing
 [assets]
 directory = "./public"
 binding = "ASSETS"
+html_handling = "none"
+not_found_handling = "single-page-application"

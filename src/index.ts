@@ -245,7 +245,7 @@ async function serveAsset(request: Request, env: Env, pathname?: string): Promis
   }
 }
 
-// Session page routes - serve HTML files
+// Session page routes - serve HTML files (with session ID in URL)
 app.get('/s/:sessionId/handout', async (c) => {
   return serveAsset(c.req.raw, c.env, '/handout.html');
 });
@@ -255,6 +255,19 @@ app.get('/s/:sessionId/draw', async (c) => {
 });
 
 app.get('/s/:sessionId/scan', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/scan.html');
+});
+
+// Direct page routes (without session ID - will prompt for code)
+app.get('/handout', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/handout.html');
+});
+
+app.get('/draw', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/draw.html');
+});
+
+app.get('/scan', async (c) => {
   return serveAsset(c.req.raw, c.env, '/scan.html');
 });
 
