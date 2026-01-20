@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Event Dashboard</title>
   <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.2.2/build/qrcode.min.js"></script>
   <style>
     .dashboard-header {
       display: flex;
@@ -172,6 +173,86 @@
       font-size: 0.875rem;
       color: var(--color-text-secondary);
     }
+
+    .qr-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .qr-tab {
+      padding: 8px 16px;
+      border: 1px solid var(--color-primary);
+      border-radius: 8px;
+      background: var(--color-surface, #fff);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .qr-tab:hover {
+      background: var(--color-primary);
+      color: white;
+    }
+    .qr-tab.active {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+    }
+    .qr-display {
+      background: var(--color-surface, #fff);
+      border: 1px solid var(--color-border, #e0e0e0);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .qr-display canvas {
+      display: block;
+      margin: 0 auto 12px;
+      border-radius: 8px;
+    }
+    .qr-display-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 4px;
+    }
+    .qr-display-url {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+    .qr-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .qr-action-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--color-primary);
+      border-radius: 8px;
+      background: var(--color-surface, #fff);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--color-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .qr-action-btn:hover {
+      background: var(--color-primary);
+      color: white;
+    }
+    .qr-action-btn.copied {
+      background: var(--color-success);
+      color: white;
+      border-color: var(--color-success);
+    }
   </style>
 </head>
 <body>
@@ -277,6 +358,26 @@
           <div id="winnersEmpty" class="empty-state hidden">
             <div class="empty-state-icon">🎯</div>
             <div data-i18n="dashboard.winners.empty">No winners drawn yet</div>
+          </div>
+        </div>
+
+        <!-- QR Codes Section -->
+        <div class="section-title">
+          <span data-i18n="dashboard.qr.title">Quick Access QR Codes</span>
+        </div>
+        <div class="qr-tabs" id="qrTabs">
+          <button type="button" class="qr-tab active" data-page="handout" data-i18n="dashboard.qr.handout">Hand Out</button>
+          <button type="button" class="qr-tab" data-page="draw" data-i18n="dashboard.qr.draw">Draw</button>
+          <button type="button" class="qr-tab" data-page="scan" data-i18n="dashboard.qr.scan">Scan</button>
+          <button type="button" class="qr-tab" data-page="dashboard" data-i18n="dashboard.qr.dashboard">Dashboard</button>
+        </div>
+        <div class="qr-display">
+          <canvas id="qrCanvas"></canvas>
+          <div class="qr-display-label" id="qrLabel">Hand Out</div>
+          <div class="qr-display-url" id="qrUrl"></div>
+          <div class="qr-actions">
+            <a href="#" id="qrOpenLink" class="qr-action-btn" target="_blank" data-i18n="dashboard.qr.open">🔗 Open Link</a>
+            <button type="button" id="qrCopyBtn" class="qr-action-btn" data-i18n="dashboard.qr.copy">📋 Copy URL</button>
           </div>
         </div>
 
@@ -429,6 +530,10 @@
         document.getElementById('linkDraw').href = `/s/${currentSessionId}/draw`;
         document.getElementById('linkScan').href = `/s/${currentSessionId}/scan`;
 
+        // Generate QR codes
+        generateQRCodes();
+        setupCopyButton();
+
       } catch (err) {
         console.error('Load error:', err);
         document.getElementById('errorMessage').textContent = err.message;
@@ -546,6 +651,85 @@
       if (!timestamp) return '-';
       const date = new Date(timestamp);
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    let currentQRPage = 'handout';
+
+    function generateQRCodes() {
+      // Set up tab click handlers
+      document.getElementById('qrTabs').addEventListener('click', (e) => {
+        const tab = e.target.closest('.qr-tab');
+        if (!tab) return;
+
+        const page = tab.dataset.page;
+        showQRCode(page);
+
+        // Update active tab
+        document.querySelectorAll('.qr-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+
+      // Show initial QR code
+      showQRCode('handout');
+    }
+
+    function showQRCode(page) {
+      currentQRPage = page;
+      const baseUrl = window.location.origin;
+      const url = `${baseUrl}/s/${currentSessionId}/${page}`;
+
+      const canvas = document.getElementById('qrCanvas');
+      const labelEl = document.getElementById('qrLabel');
+      const urlEl = document.getElementById('qrUrl');
+      const openLink = document.getElementById('qrOpenLink');
+      const copyBtn = document.getElementById('qrCopyBtn');
+
+      // Generate QR code
+      QRCode.toCanvas(canvas, url, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      }, (err) => {
+        if (err) console.error('QR error:', err);
+      });
+
+      // Update label and URL
+      const labels = {
+        handout: t('dashboard.qr.handout'),
+        draw: t('dashboard.qr.draw'),
+        scan: t('dashboard.qr.scan'),
+        dashboard: t('dashboard.qr.dashboard')
+      };
+      labelEl.textContent = labels[page] || page;
+      urlEl.textContent = url;
+
+      // Set open link href
+      openLink.href = url;
+
+      // Reset copy button state
+      copyBtn.classList.remove('copied');
+      copyBtn.innerHTML = `📋 ${t('dashboard.qr.copy')}`;
+    }
+
+    function setupCopyButton() {
+      const copyBtn = document.getElementById('qrCopyBtn');
+      copyBtn.addEventListener('click', async () => {
+        const baseUrl = window.location.origin;
+        const url = `${baseUrl}/s/${currentSessionId}/${currentQRPage}`;
+
+        try {
+          await navigator.clipboard.writeText(url);
+          copyBtn.classList.add('copied');
+          copyBtn.innerHTML = `✓ ${t('dashboard.qr.copied')}`;
+
+          setTimeout(() => {
+            copyBtn.classList.remove('copied');
+            copyBtn.innerHTML = `📋 ${t('dashboard.qr.copy')}`;
+          }, 2000);
+        } catch (err) {
+          console.error('Copy failed:', err);
+        }
+      });
     }
 
     function showView(view) {

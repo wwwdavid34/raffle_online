@@ -578,6 +578,90 @@ const translations = {
     'ja': 'チケット読取'
   },
 
+  // Dashboard QR codes
+  'dashboard.qr.title': {
+    'en': 'Quick Access QR Codes',
+    'zh-TW': '快速存取 QR Code',
+    'ja': 'クイックアクセスQRコード'
+  },
+  'dashboard.qr.handout': {
+    'en': 'Hand Out',
+    'zh-TW': '發票',
+    'ja': '配布'
+  },
+  'dashboard.qr.draw': {
+    'en': 'Draw',
+    'zh-TW': '抽獎',
+    'ja': '抽選'
+  },
+  'dashboard.qr.scan': {
+    'en': 'Scan',
+    'zh-TW': '掃描',
+    'ja': '読取'
+  },
+  'dashboard.qr.dashboard': {
+    'en': 'Dashboard',
+    'zh-TW': '儀表板',
+    'ja': 'ダッシュボード'
+  },
+  'dashboard.qr.open': {
+    'en': '🔗 Open Link',
+    'zh-TW': '🔗 開啟連結',
+    'ja': '🔗 リンクを開く'
+  },
+  'dashboard.qr.copy': {
+    'en': '📋 Copy URL',
+    'zh-TW': '📋 複製網址',
+    'ja': '📋 URLをコピー'
+  },
+  'dashboard.qr.copied': {
+    'en': 'Copied!',
+    'zh-TW': '已複製！',
+    'ja': 'コピーしました！'
+  },
+
+  // Session creation QR codes
+  'session.qr.title': {
+    'en': 'Scan to Open on Mobile',
+    'zh-TW': '掃描以在手機上開啟',
+    'ja': 'スキャンしてモバイルで開く'
+  },
+  'session.qr.handout': {
+    'en': 'Hand Out',
+    'zh-TW': '發票',
+    'ja': '配布'
+  },
+  'session.qr.draw': {
+    'en': 'Draw',
+    'zh-TW': '抽獎',
+    'ja': '抽選'
+  },
+  'session.qr.scan': {
+    'en': 'Scan',
+    'zh-TW': '掃描',
+    'ja': '読取'
+  },
+  'session.qr.dashboard': {
+    'en': 'Dashboard',
+    'zh-TW': '儀表板',
+    'ja': 'ダッシュボード'
+  },
+  'session.qr.open': {
+    'en': '🔗 Open Link',
+    'zh-TW': '🔗 開啟連結',
+    'ja': '🔗 リンクを開く'
+  },
+  'session.qr.copy': {
+    'en': '📋 Copy URL',
+    'zh-TW': '📋 複製網址',
+    'ja': '📋 URLをコピー'
+  },
+  'session.qr.copied': {
+    'en': 'Copied!',
+    'zh-TW': '已複製！',
+    'ja': 'コピーしました！'
+  },
+
   // State labels (short form for badges)
   'state.OPEN': {
     'en': 'Open',
