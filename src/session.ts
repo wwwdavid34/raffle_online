@@ -13,9 +13,11 @@ export interface SessionData {
   language: Language;
   theme: Theme;
   pinHash: string;
+  passkeyHash?: string;  // Optional passkey for extra security
   state: SessionState;
   createdAt: number;
   lastActiveAt: number;
+  redrawReturnToPool: boolean;  // If true, non-claimed winners return to pool on redraw
   currentWinner?: {
     ticketId: string;
     batchId: string;
@@ -205,6 +207,8 @@ export class RaffleSession implements DurableObject {
       language: Language;
       theme?: Theme;
       pin: string;
+      passkey?: string;
+      redrawReturnToPool?: boolean;
     };
 
     this.data.session = {
@@ -213,9 +217,11 @@ export class RaffleSession implements DurableObject {
       language: body.language || 'en',
       theme: body.theme || 'default',
       pinHash: await hashPin(body.pin),
+      passkeyHash: body.passkey ? await hashPin(body.passkey) : undefined,
       state: 'OPEN',
       createdAt: Date.now(),
-      lastActiveAt: Date.now()
+      lastActiveAt: Date.now(),
+      redrawReturnToPool: body.redrawReturnToPool ?? true  // Default to returning to pool
     };
 
     await this.save();
@@ -340,13 +346,40 @@ export class RaffleSession implements DurableObject {
       });
     }
 
-    const { pin } = await request.json() as { pin: string };
+    const { pin, passkey } = await request.json() as { pin: string; passkey?: string };
     const pinHash = await hashPin(pin);
 
+    // Verify PIN first
     if (pinHash !== this.data.session.pinHash) {
       return new Response(JSON.stringify({ valid: false }), {
         headers: { 'Content-Type': 'application/json' }
       });
+    }
+
+    // Check if passkey is required
+    const hasPasskey = !!this.data.session.passkeyHash;
+
+    if (hasPasskey) {
+      if (!passkey) {
+        // Passkey required but not provided
+        return new Response(JSON.stringify({
+          valid: false,
+          requiresPasskey: true
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const passkeyHash = await hashPin(passkey);
+      if (passkeyHash !== this.data.session.passkeyHash) {
+        return new Response(JSON.stringify({
+          valid: false,
+          requiresPasskey: true,
+          passkeyInvalid: true
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     return new Response(JSON.stringify({ valid: true }), {
@@ -616,10 +649,14 @@ export class RaffleSession implements DurableObject {
       });
     }
 
-    // Mark current winner as not winner (they didn't claim)
+    // Handle current winner based on redrawReturnToPool setting
     const currentWinner = this.data.tickets[this.data.session.currentWinner.ticketId];
     if (currentWinner) {
-      currentWinner.isWinner = false;
+      if (this.data.session.redrawReturnToPool) {
+        // Return to pool - mark as not winner so they can be drawn again
+        currentWinner.isWinner = false;
+      }
+      // If redrawReturnToPool is false, keep isWinner = true (excluded from future draws)
     }
 
     // Reset to locked state

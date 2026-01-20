@@ -184,17 +184,33 @@
     <!-- PIN Entry View -->
     <div id="pinView" class="view active">
       <h1 data-i18n="control.title">Control Panel</h1>
-      <p class="text-center text-secondary" data-i18n="control.enterPin">Enter session code to access controls</p>
+      <p class="text-center text-secondary" id="pinPrompt" data-i18n="control.enterPin">Enter session code to access controls</p>
       <div id="pinError" class="error-message hidden"></div>
 
       <div class="card" style="max-width: 400px; margin: 0 auto;">
-        <div class="pin-input-container">
+        <div class="pin-input-container" id="pinInputSection">
           <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="0">
           <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="1">
           <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="2">
           <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="3">
           <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="4">
           <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="5">
+        </div>
+
+        <!-- Passkey input (shown when required) -->
+        <div id="passkeySection" class="hidden" style="margin-top: 1rem;">
+          <p class="text-center text-secondary mb-2" data-i18n="control.passkeyRequired">This session requires a passkey</p>
+          <input
+            type="password"
+            id="passkeyInput"
+            class="form-control"
+            data-i18n-placeholder="control.enterPasskey"
+            placeholder="Enter passkey"
+            style="text-align: center; font-size: 1.25rem; letter-spacing: 0.1rem;"
+          >
+          <button type="button" id="passkeySubmitBtn" class="btn btn-primary mt-2" style="width: 100%;">
+            <span data-i18n="common.confirm">Verify</span>
+          </button>
         </div>
       </div>
     </div>
@@ -307,6 +323,7 @@
     let dashboardData = null;
     let countdownInterval = null;
     let pollInterval = null;
+    let pendingPin = null;  // Store PIN while waiting for passkey
 
     // DOM Elements
     const pinView = document.getElementById('pinView');
@@ -346,6 +363,7 @@
       }
 
       setupPinInputs();
+      setupPasskeyInput();
       setupButtons();
     }
 
@@ -394,7 +412,7 @@
       pinInputs[0].focus();
     }
 
-    async function verifyPin(pin) {
+    async function verifyPin(pin, passkey = null) {
       try {
         if (!currentSessionId) {
           const checkResponse = await fetch(`/api/session/${pin}`);
@@ -406,7 +424,7 @@
         const response = await fetch(`/api/session/${currentSessionId}/verify-pin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin })
+          body: JSON.stringify({ pin, passkey })
         });
 
         const data = await response.json();
@@ -415,6 +433,18 @@
           showView('main');
           updateUI();
           startPolling();
+        } else if (data.requiresPasskey) {
+          // Passkey required - show passkey input
+          pendingPin = pin;
+          document.getElementById('pinInputSection').classList.add('hidden');
+          document.getElementById('passkeySection').classList.remove('hidden');
+          document.getElementById('passkeyInput').focus();
+
+          if (data.passkeyInvalid) {
+            pinError.textContent = t('error.invalidPasskey');
+            pinError.classList.remove('hidden');
+            document.getElementById('passkeyInput').value = '';
+          }
         } else {
           pinError.textContent = t('error.invalidPin');
           pinError.classList.remove('hidden');
@@ -427,6 +457,27 @@
         pinInputs.forEach(i => i.value = '');
         pinInputs[0].focus();
       }
+    }
+
+    function setupPasskeyInput() {
+      const passkeyInput = document.getElementById('passkeyInput');
+      const passkeyBtn = document.getElementById('passkeySubmitBtn');
+
+      passkeyBtn.addEventListener('click', () => {
+        const passkey = passkeyInput.value.trim();
+        if (passkey && pendingPin) {
+          verifyPin(pendingPin, passkey);
+        }
+      });
+
+      passkeyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const passkey = passkeyInput.value.trim();
+          if (passkey && pendingPin) {
+            verifyPin(pendingPin, passkey);
+          }
+        }
+      });
     }
 
     function setupButtons() {

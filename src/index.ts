@@ -36,6 +36,8 @@ app.post('/api/session', async (c) => {
     eventName: string;
     language?: string;
     theme?: string;
+    passkey?: string;
+    redrawReturnToPool?: boolean;
   };
 
   if (!body.eventName) {
@@ -54,7 +56,9 @@ app.post('/api/session', async (c) => {
       eventName: body.eventName,
       language: body.language || 'en',
       theme: body.theme || 'default',
-      pin: sessionId  // PIN is the session ID itself
+      pin: sessionId,  // PIN is the session ID itself
+      passkey: body.passkey || undefined,
+      redrawReturnToPool: body.redrawReturnToPool ?? true
     })
   }));
 

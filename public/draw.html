@@ -5,6 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Raffle - Draw</title>
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body.projector-mode {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    body.projector-mode #app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    body.projector-mode .view.active {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    body.projector-mode .card {
+      margin: 0 auto;
+      width: 100%;
+      max-width: 600px;
+    }
+    body.projector-mode .session-header {
+      padding: 1rem;
+      text-align: center;
+    }
+    .winner-actions {
+      transition: opacity 0.3s ease-out;
+    }
+    .winner-actions.auto-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body class="projector-mode">
   <div id="app">
@@ -112,7 +150,7 @@
         <div class="countdown mt-3" id="countdown">60</div>
         <p class="text-center text-secondary" data-i18n="draw.timeRemaining">Time remaining</p>
 
-        <div class="action-grid mt-3">
+        <div class="action-grid mt-3 winner-actions" id="winnerActions">
           <button type="button" id="redrawBtn" class="btn btn-warning">
             <span data-i18n="draw.redraw">Redraw</span>
           </button>
@@ -147,6 +185,7 @@
     let pinVerified = false;
     let countdownInterval = null;
     let pollInterval = null;
+    let actionsIdleTimer = null;
 
     // DOM Elements
     const pinView = document.getElementById('pinView');
@@ -562,6 +601,9 @@
 
       // Start countdown
       startCountdown(winner.claimDeadline);
+
+      // Start auto-hide timer for action buttons
+      startActionsIdleTimer();
     }
 
     function startCountdown(deadline) {
@@ -671,6 +713,37 @@
         errorDiv.classList.add('hidden');
       }, 5000);
     }
+
+    // Auto-hide winner action buttons after 5 seconds of inactivity
+    function startActionsIdleTimer() {
+      const actionsEl = document.getElementById('winnerActions');
+
+      // Clear existing timer
+      if (actionsIdleTimer) {
+        clearTimeout(actionsIdleTimer);
+      }
+
+      // Show buttons
+      actionsEl.classList.remove('auto-hidden');
+
+      // Set timer to hide after 5 seconds
+      actionsIdleTimer = setTimeout(() => {
+        if (!winnerState.classList.contains('hidden')) {
+          actionsEl.classList.add('auto-hidden');
+        }
+      }, 5000);
+    }
+
+    function resetActionsIdleTimer() {
+      if (actionsIdleTimer && !winnerState.classList.contains('hidden')) {
+        startActionsIdleTimer();
+      }
+    }
+
+    // Listen for user activity to show buttons
+    ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(event => {
+      document.addEventListener(event, resetActionsIdleTimer);
+    });
   </script>
 </body>
 </html>

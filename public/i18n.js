@@ -80,6 +80,16 @@ const translations = {
     'zh-TW': '語言',
     'ja': '言語'
   },
+  'session.create.theme': {
+    'en': 'Theme',
+    'zh-TW': '主題',
+    'ja': 'テーマ'
+  },
+  'session.create.occasionThemes': {
+    'en': 'Occasions',
+    'zh-TW': '節慶',
+    'ja': '季節・イベント'
+  },
   'session.create.pin': {
     'en': 'Host PIN (6 digits)',
     'zh-TW': '主持人 PIN (6 位數字)',
@@ -89,6 +99,66 @@ const translations = {
     'en': 'Create Raffle',
     'zh-TW': '建立抽獎',
     'ja': '抽選を作成'
+  },
+  'session.create.redrawRule': {
+    'en': 'Redraw Rule',
+    'zh-TW': '重抽規則',
+    'ja': '再抽選ルール'
+  },
+  'session.create.redrawReturn': {
+    'en': 'Return to pool (can win again)',
+    'zh-TW': '回到抽獎池 (可再次中獎)',
+    'ja': 'プールに戻す (再当選可能)'
+  },
+  'session.create.redrawExclude': {
+    'en': 'Exclude from pool (cannot win again)',
+    'zh-TW': '排除於抽獎池 (不可再次中獎)',
+    'ja': 'プールから除外 (再当選不可)'
+  },
+  'session.create.redrawHint': {
+    'en': 'What happens to unclaimed winners when you redraw',
+    'zh-TW': '重抽時未領獎者的處理方式',
+    'ja': '再抽選時の未受取当選者の扱い'
+  },
+  'session.create.redrawExcludeCheck': {
+    'en': 'Exclude unclaimed winners from future draws',
+    'zh-TW': '將未領獎者排除於後續抽獎',
+    'ja': '未受取の当選者を次回以降の抽選から除外'
+  },
+  'session.create.redrawHintShort': {
+    'en': 'If unchecked, they can win again',
+    'zh-TW': '未勾選時，他們可再次中獎',
+    'ja': 'チェックしない場合、再当選可能'
+  },
+  'session.create.passkey': {
+    'en': 'Passkey (optional)',
+    'zh-TW': '密碼 (可選)',
+    'ja': 'パスキー (任意)'
+  },
+  'session.create.passkeyPlaceholder': {
+    'en': 'Extra security code',
+    'zh-TW': '額外安全碼',
+    'ja': '追加セキュリティコード'
+  },
+  'session.create.passkeyHint': {
+    'en': 'Required for host controls if set. Session ID alone won\'t grant access.',
+    'zh-TW': '設定後需輸入才能存取主持人控制功能。僅有活動代碼無法存取。',
+    'ja': '設定するとホスト機能へのアクセスに必要。セッションIDだけではアクセスできません。'
+  },
+  'control.enterPasskey': {
+    'en': 'Enter passkey',
+    'zh-TW': '輸入密碼',
+    'ja': 'パスキーを入力'
+  },
+  'control.passkeyRequired': {
+    'en': 'This session requires a passkey',
+    'zh-TW': '此活動需要輸入密碼',
+    'ja': 'このセッションにはパスキーが必要です'
+  },
+  'error.invalidPasskey': {
+    'en': 'Invalid passkey',
+    'zh-TW': '密碼錯誤',
+    'ja': 'パスキーが無効です'
   },
 
   // Handout page
@@ -146,6 +216,11 @@ const translations = {
     'en': '✓ Mark as Claimed',
     'zh-TW': '✓ 手動標記已領取',
     'ja': '✓ 受取済みにする'
+  },
+  'handout.claiming': {
+    'en': 'Claiming...',
+    'zh-TW': '領取中...',
+    'ja': '受取中...'
   },
   'handout.manualClaimHint': {
     'en': 'Use if participant cannot scan QR code',
@@ -695,6 +770,58 @@ const translations = {
     'en': 'Copied!',
     'zh-TW': '已複製！',
     'ja': 'コピーしました！'
+  },
+
+  // Session creation success page
+  'session.success.title': {
+    'en': '🎉 Raffle Created!',
+    'zh-TW': '🎉 抽獎已建立！',
+    'ja': '🎉 抽選作成完了！'
+  },
+  'session.success.codeLabel': {
+    'en': 'Your Session Code (also your PIN):',
+    'zh-TW': '您的活動代碼 (同時也是 PIN 碼)：',
+    'ja': 'セッションコード (PINと同じ):'
+  },
+  'session.success.shareHint': {
+    'en': 'Share this code with your co-hosts. They\'ll need it to access host controls.',
+    'zh-TW': '將此代碼分享給共同主持人。他們需要此代碼來存取主持人控制功能。',
+    'ja': '共同ホストにこのコードを共有してください。ホスト機能へのアクセスに必要です。'
+  },
+  'session.success.linkControl': {
+    'en': '⚙ Control Panel',
+    'zh-TW': '⚙ 控制面板',
+    'ja': '⚙ コントロールパネル'
+  },
+  'session.success.linkHandout': {
+    'en': '↗ Hand Out Tickets',
+    'zh-TW': '↗ 發放票券',
+    'ja': '↗ チケット配布'
+  },
+  'session.success.linkDraw': {
+    'en': '▶ Draw Page (Projector)',
+    'zh-TW': '▶ 抽獎頁面 (投影用)',
+    'ja': '▶ 抽選ページ (投影用)'
+  },
+  'session.success.linkScan': {
+    'en': '◎ Scan & Verify',
+    'zh-TW': '◎ 掃描驗證',
+    'ja': '◎ スキャン＆確認'
+  },
+  'session.success.linkDashboard': {
+    'en': '▤ Dashboard',
+    'zh-TW': '▤ 儀表板',
+    'ja': '▤ ダッシュボード'
+  },
+  'session.success.open': {
+    'en': '↗ Open',
+    'zh-TW': '↗ 開啟',
+    'ja': '↗ 開く'
+  },
+  'session.success.copy': {
+    'en': '⧉ Copy',
+    'zh-TW': '⧉ 複製',
+    'ja': '⧉ コピー'
   },
 
   // Session creation QR codes

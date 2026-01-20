@@ -98,6 +98,18 @@
       color: white;
       border-color: var(--color-success);
     }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--color-primary);
+    }
   </style>
 </head>
 <body>
@@ -130,7 +142,7 @@
       </div>
 
       <div class="form-group">
-        <label>Theme</label>
+        <label data-i18n="session.create.theme">Theme</label>
         <div class="theme-picker" id="themePicker">
           <div class="theme-option selected" data-theme="default" title="Default"></div>
           <div class="theme-option" data-theme="ocean" title="Ocean"></div>
@@ -141,15 +153,39 @@
           <div class="theme-option" data-theme="rose" title="Rose"></div>
           <div class="theme-option" data-theme="light" title="Light"></div>
 
-          <div class="theme-section-label">Occasions</div>
-          <div class="theme-option" data-theme="chinese-new-year" title="Chinese New Year"></div>
-          <div class="theme-option" data-theme="halloween" title="Halloween"></div>
-          <div class="theme-option" data-theme="christmas" title="Christmas"></div>
-          <div class="theme-option" data-theme="valentines" title="Valentine's Day"></div>
-          <div class="theme-option" data-theme="spring" title="Spring"></div>
-          <div class="theme-option" data-theme="summer" title="Summer"></div>
+          <div class="theme-section-label" data-i18n="session.create.occasionThemes">Occasions</div>
+          <div class="theme-option" data-theme="chinese-new-year" title="Chinese New Year 🧧"></div>
+          <div class="theme-option" data-theme="halloween" title="Halloween 🎃"></div>
+          <div class="theme-option" data-theme="christmas" title="Christmas 🎄"></div>
+          <div class="theme-option" data-theme="valentines" title="Valentine's 💕"></div>
+          <div class="theme-option" data-theme="spring" title="Spring 🌸"></div>
+          <div class="theme-option" data-theme="summer" title="Summer ☀️"></div>
         </div>
         <input type="hidden" id="theme" value="default">
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="redrawExclude">
+          <span data-i18n="session.create.redrawExcludeCheck">Exclude unclaimed winners from future draws</span>
+        </label>
+        <p class="text-secondary" style="font-size: 0.75rem; margin-top: 0.25rem; margin-left: 1.5rem;" data-i18n="session.create.redrawHintShort">
+          If unchecked, they can win again
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="session.create.passkey">Passkey (optional)</label>
+        <input
+          type="password"
+          id="passkey"
+          maxlength="20"
+          data-i18n-placeholder="session.create.passkeyPlaceholder"
+          placeholder="Extra security code"
+        >
+        <p class="text-secondary" style="font-size: 0.75rem; margin-top: 0.5rem;" data-i18n="session.create.passkeyHint">
+          Required for host controls if set. Session ID alone won't grant access.
+        </p>
       </div>
 
       <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -166,17 +202,17 @@
     <!-- Success View (shown after creation) -->
     <div id="successView" class="hidden">
       <div class="card" style="text-align: center;">
-        <h2 style="color: var(--color-primary); margin-bottom: 1rem;">🎉 Raffle Created!</h2>
-        <p style="margin-bottom: 0.5rem;">Your Session Code (also your PIN):</p>
+        <h2 style="color: var(--color-primary); margin-bottom: 1rem;" data-i18n="session.success.title">🎉 Raffle Created!</h2>
+        <p style="margin-bottom: 0.5rem;" data-i18n="session.success.codeLabel">Your Session Code (also your PIN):</p>
         <div id="sessionCode" style="font-size: 3rem; font-weight: bold; letter-spacing: 0.5rem; color: var(--color-primary); margin: 1rem 0;"></div>
-        <p class="text-secondary" style="font-size: 0.9rem;">Share this code with your co-hosts. They'll need it to access host controls.</p>
+        <p class="text-secondary" style="font-size: 0.9rem;" data-i18n="session.success.shareHint">Share this code with your co-hosts. They'll need it to access host controls.</p>
 
         <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
-          <a id="linkControl" href="#" class="btn btn-primary">⚙ Control Panel</a>
-          <a id="linkHandout" href="#" class="btn btn-secondary">↗ Hand Out Tickets</a>
-          <a id="linkDraw" href="#" class="btn btn-secondary">▶ Draw Page (Projector)</a>
-          <a id="linkScan" href="#" class="btn btn-secondary">◎ Scan & Verify</a>
-          <a id="linkDashboard" href="#" class="btn btn-secondary">▤ Dashboard</a>
+          <a id="linkControl" href="#" class="btn btn-primary" data-i18n="session.success.linkControl">⚙ Control Panel</a>
+          <a id="linkHandout" href="#" class="btn btn-secondary" data-i18n="session.success.linkHandout">↗ Hand Out Tickets</a>
+          <a id="linkDraw" href="#" class="btn btn-secondary" data-i18n="session.success.linkDraw">▶ Draw Page (Projector)</a>
+          <a id="linkScan" href="#" class="btn btn-secondary" data-i18n="session.success.linkScan">◎ Scan & Verify</a>
+          <a id="linkDashboard" href="#" class="btn btn-secondary" data-i18n="session.success.linkDashboard">▤ Dashboard</a>
         </div>
 
         <div class="qr-section">
@@ -193,8 +229,8 @@
             <div class="qr-display-label" id="qrLabel">Control</div>
             <div class="qr-display-url" id="qrUrl"></div>
             <div class="qr-actions">
-              <a href="#" id="qrOpenLink" class="qr-action-btn" target="_blank">↗ Open</a>
-              <button type="button" id="qrCopyBtn" class="qr-action-btn">⧉ Copy</button>
+              <a href="#" id="qrOpenLink" class="qr-action-btn" target="_blank" data-i18n="session.success.open">↗ Open</a>
+              <button type="button" id="qrCopyBtn" class="qr-action-btn" data-i18n="session.success.copy">⧉ Copy</button>
             </div>
           </div>
         </div>
@@ -239,6 +275,8 @@
       const eventName = document.getElementById('eventName').value.trim();
       const language = document.getElementById('language').value;
       const theme = document.getElementById('theme').value;
+      const redrawReturnToPool = !document.getElementById('redrawExclude').checked;
+      const passkey = document.getElementById('passkey').value.trim() || undefined;
 
       if (!eventName) {
         showError('Please enter an event name');
@@ -252,7 +290,7 @@
         const response = await fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventName, language, theme })
+          body: JSON.stringify({ eventName, language, theme, redrawReturnToPool, passkey })
         });
 
         const data = await response.json();

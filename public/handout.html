@@ -378,7 +378,7 @@
 
       const btn = document.getElementById('manualClaimBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Claiming...';
+      btn.innerHTML = `<span class="spinner"></span> ${t('handout.claiming')}`;
 
       try {
         const response = await fetch(`/api/session/${currentSessionId}/claim`, {
