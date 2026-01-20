@@ -81,6 +81,21 @@ app.get('/api/session/:sessionId', async (c) => {
   return c.json(data);
 });
 
+// API: Get dashboard data
+app.get('/api/session/:sessionId/dashboard', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/dashboard?sessionId=' + sessionId));
+  const data = await response.json();
+
+  if (!response.ok) {
+    return c.json(data, response.status as any);
+  }
+
+  return c.json(data);
+});
+
 // API: Verify PIN
 app.post('/api/session/:sessionId/verify-pin', async (c) => {
   const sessionId = c.req.param('sessionId');
@@ -289,6 +304,10 @@ app.get('/s/:sessionId/ticket', async (c) => {
   return serveAsset(c.req.raw, c.env, '/ticket.html');
 });
 
+app.get('/s/:sessionId/dashboard', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/dashboard.html');
+});
+
 // Direct page routes (without session ID - will prompt for code)
 app.get('/handout', async (c) => {
   return serveAsset(c.req.raw, c.env, '/handout.html');
@@ -300,6 +319,10 @@ app.get('/draw', async (c) => {
 
 app.get('/scan', async (c) => {
   return serveAsset(c.req.raw, c.env, '/scan.html');
+});
+
+app.get('/dashboard', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/dashboard.html');
 });
 
 // Serve static files for all other routes

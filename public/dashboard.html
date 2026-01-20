@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Event Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .dashboard-header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .session-meta {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .session-id {
+      font-family: monospace;
+      font-size: 1rem;
+      background: var(--color-surface-2, #f0f0f0);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    .state-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .state-OPEN { background: var(--color-success); color: white; }
+    .state-LOCKED { background: var(--color-warning); color: white; }
+    .state-DRAWING { background: var(--color-primary); color: white; }
+    .state-CLAIMING { background: var(--color-primary); color: white; }
+    .state-CLOSED { background: var(--color-text-secondary); color: white; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+    @media (min-width: 600px) {
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    .stat-card {
+      background: var(--color-surface, #fff);
+      border: 1px solid var(--color-border, #e0e0e0);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .stat-sub {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin-top: 4px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .count {
+      background: var(--color-surface-2, #f0f0f0);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .data-table th,
+    .data-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border, #e0e0e0);
+    }
+    .data-table th {
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+    .data-table tbody tr:hover {
+      background: var(--color-surface-2, #f8f8f8);
+    }
+    .table-container {
+      overflow-x: auto;
+      background: var(--color-surface, #fff);
+      border: 1px solid var(--color-border, #e0e0e0);
+      border-radius: 12px;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .status-claimed { background: #d4edda; color: #155724; }
+    .status-unclaimed { background: #fff3cd; color: #856404; }
+    .status-winner { background: #ffd700; color: #000; }
+    .status-prize-claimed { background: #d4edda; color: #155724; }
+    .status-pending { background: #cce5ff; color: #004085; }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--color-text-secondary);
+    }
+    .empty-state-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .refresh-indicator {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .nav-link {
+      padding: 8px 16px;
+      background: var(--color-surface-2, #f0f0f0);
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--color-text);
+      font-size: 0.875rem;
+    }
+    .nav-link:hover {
+      background: var(--color-border, #e0e0e0);
+    }
+
+    .duration {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- PIN Entry View -->
+    <div id="pinView" class="view active">
+      <div class="card">
+        <h1 class="text-center" data-i18n="dashboard.title">Event Dashboard</h1>
+        <p class="text-center text-secondary" data-i18n="dashboard.enterPin">Enter the session PIN to view dashboard</p>
+
+        <div class="pin-input-container">
+          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="0" autocomplete="off">
+          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="1" autocomplete="off">
+          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="2" autocomplete="off">
+          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="3" autocomplete="off">
+          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="4" autocomplete="off">
+          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="5" autocomplete="off">
+        </div>
+
+        <div id="pinError" class="error-message hidden" data-i18n="common.invalidPin">Invalid PIN</div>
+
+        <button type="button" id="verifyPinBtn" class="btn btn-primary btn-block mt-2" data-i18n="common.continue">Continue</button>
+      </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboardView" class="view">
+      <div class="card">
+        <div class="dashboard-header">
+          <div>
+            <h1 id="eventName"></h1>
+            <div class="duration" id="sessionDuration"></div>
+          </div>
+          <div class="session-meta">
+            <span class="session-id" id="sessionId"></span>
+            <span class="state-badge" id="stateBadge"></span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="statTotalBatches">0</div>
+            <div class="stat-label" data-i18n="dashboard.stats.batches">Batches</div>
+            <div class="stat-sub" id="statClaimedBatches"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statTotalTickets">0</div>
+            <div class="stat-label" data-i18n="dashboard.stats.tickets">Tickets</div>
+            <div class="stat-sub" id="statEligibleTickets"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statWinnersDrawn">0</div>
+            <div class="stat-label" data-i18n="dashboard.stats.winners">Winners</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statPrizesClaimed">0</div>
+            <div class="stat-label" data-i18n="dashboard.stats.claimed">Claimed</div>
+          </div>
+        </div>
+
+        <!-- Batches Section -->
+        <div class="section-title">
+          <span data-i18n="dashboard.batches.title">Ticket Batches</span>
+          <span class="count" id="batchCount">0</span>
+        </div>
+        <div class="table-container">
+          <table class="data-table" id="batchesTable">
+            <thead>
+              <tr>
+                <th data-i18n="dashboard.batches.id">ID</th>
+                <th data-i18n="dashboard.batches.label">Label</th>
+                <th data-i18n="dashboard.batches.tickets">Tickets</th>
+                <th data-i18n="dashboard.batches.status">Status</th>
+                <th data-i18n="dashboard.batches.time">Time</th>
+              </tr>
+            </thead>
+            <tbody id="batchesBody">
+            </tbody>
+          </table>
+          <div id="batchesEmpty" class="empty-state hidden">
+            <div class="empty-state-icon">📋</div>
+            <div data-i18n="dashboard.batches.empty">No batches created yet</div>
+          </div>
+        </div>
+
+        <!-- Winners Section -->
+        <div class="section-title">
+          <span data-i18n="dashboard.winners.title">Winners</span>
+          <span class="count" id="winnerCount">0</span>
+        </div>
+        <div class="table-container">
+          <table class="data-table" id="winnersTable">
+            <thead>
+              <tr>
+                <th data-i18n="dashboard.winners.ticket">Ticket</th>
+                <th data-i18n="dashboard.winners.batch">Batch</th>
+                <th data-i18n="dashboard.winners.status">Status</th>
+              </tr>
+            </thead>
+            <tbody id="winnersBody">
+            </tbody>
+          </table>
+          <div id="winnersEmpty" class="empty-state hidden">
+            <div class="empty-state-icon">🎯</div>
+            <div data-i18n="dashboard.winners.empty">No winners drawn yet</div>
+          </div>
+        </div>
+
+        <div class="nav-links">
+          <a href="#" id="linkHandout" class="nav-link" data-i18n="dashboard.links.handout">Hand Out Tickets</a>
+          <a href="#" id="linkDraw" class="nav-link" data-i18n="dashboard.links.draw">Draw Screen</a>
+          <a href="#" id="linkScan" class="nav-link" data-i18n="dashboard.links.scan">Scan Tickets</a>
+        </div>
+
+        <div class="refresh-indicator" data-i18n="dashboard.autoRefresh">Auto-refreshing every 2 seconds</div>
+      </div>
+    </div>
+
+    <!-- Error View -->
+    <div id="errorView" class="view">
+      <div class="card text-center">
+        <h2 data-i18n="error.sessionNotFound">Session Not Found</h2>
+        <p class="text-secondary" id="errorMessage"></p>
+        <button type="button" class="btn btn-primary mt-2" onclick="location.reload()" data-i18n="common.tryAgain">Try Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/i18n.js"></script>
+  <script>
+    // Parse URL for session ID
+    const pathParts = window.location.pathname.split('/');
+    let currentSessionId = null;
+
+    if (pathParts[1] === 's' && pathParts[2]) {
+      currentSessionId = pathParts[2];
+    }
+
+    let dashboardData = null;
+    let pollInterval = null;
+
+    // DOM elements
+    const pinView = document.getElementById('pinView');
+    const dashboardView = document.getElementById('dashboardView');
+    const errorView = document.getElementById('errorView');
+    const pinInputs = document.querySelectorAll('.pin-input');
+
+    init();
+
+    function init() {
+      setupPinInputs();
+      document.getElementById('verifyPinBtn').addEventListener('click', verifyPin);
+
+      if (currentSessionId) {
+        // Session ID in URL - try to load directly
+        loadDashboard();
+      } else {
+        showView('pin');
+        pinInputs[0].focus();
+      }
+    }
+
+    function setupPinInputs() {
+      pinInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          const value = e.target.value;
+          if (value && index < 5) {
+            pinInputs[index + 1].focus();
+          }
+          if (index === 5 && value) {
+            verifyPin();
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            pinInputs[index - 1].focus();
+          }
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          const digits = paste.replace(/\D/g, '').slice(0, 6);
+          digits.split('').forEach((d, i) => {
+            if (pinInputs[i]) pinInputs[i].value = d;
+          });
+          if (digits.length === 6) verifyPin();
+        });
+      });
+    }
+
+    function getPin() {
+      return Array.from(pinInputs).map(i => i.value).join('');
+    }
+
+    async function verifyPin() {
+      const pin = getPin();
+      if (pin.length !== 6) return;
+
+      const btn = document.getElementById('verifyPinBtn');
+      btn.disabled = true;
+      document.getElementById('pinError').classList.add('hidden');
+
+      try {
+        // First check if session exists
+        const statusResponse = await fetch(`/api/session/${pin}`);
+        if (!statusResponse.ok) {
+          throw new Error('Session not found');
+        }
+
+        // PIN is the session ID itself
+        currentSessionId = pin;
+
+        // Update URL
+        history.replaceState(null, '', `/s/${currentSessionId}/dashboard`);
+
+        // Load dashboard
+        await loadDashboard();
+
+      } catch (err) {
+        document.getElementById('pinError').classList.remove('hidden');
+        pinInputs.forEach(i => i.value = '');
+        pinInputs[0].focus();
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function loadDashboard() {
+      try {
+        const response = await fetch(`/api/session/${currentSessionId}/dashboard`);
+        if (!response.ok) {
+          throw new Error('Failed to load dashboard');
+        }
+
+        dashboardData = await response.json();
+
+        // Set language and theme
+        setLanguage(dashboardData.session.language);
+        if (dashboardData.session.theme && dashboardData.session.theme !== 'default') {
+          document.documentElement.setAttribute('data-theme', dashboardData.session.theme);
+        }
+
+        updateDashboard();
+        showView('dashboard');
+
+        // Start polling
+        if (!pollInterval) {
+          pollInterval = setInterval(refreshDashboard, 2000);
+        }
+
+        // Set up navigation links
+        document.getElementById('linkHandout').href = `/s/${currentSessionId}/handout`;
+        document.getElementById('linkDraw').href = `/s/${currentSessionId}/draw`;
+        document.getElementById('linkScan').href = `/s/${currentSessionId}/scan`;
+
+      } catch (err) {
+        console.error('Load error:', err);
+        document.getElementById('errorMessage').textContent = err.message;
+        showView('error');
+      }
+    }
+
+    async function refreshDashboard() {
+      try {
+        const response = await fetch(`/api/session/${currentSessionId}/dashboard`);
+        if (response.ok) {
+          dashboardData = await response.json();
+          updateDashboard();
+        }
+      } catch (err) {
+        console.error('Refresh error:', err);
+      }
+    }
+
+    function updateDashboard() {
+      const { session, stats, batches, winners } = dashboardData;
+
+      // Header
+      document.getElementById('eventName').textContent = session.eventName;
+      document.getElementById('sessionId').textContent = `#${session.sessionId}`;
+
+      const badge = document.getElementById('stateBadge');
+      badge.textContent = t(`state.${session.state}`) || session.state;
+      badge.className = `state-badge state-${session.state}`;
+
+      // Duration
+      const duration = formatDuration(Date.now() - session.createdAt);
+      document.getElementById('sessionDuration').textContent = duration;
+
+      // Stats
+      document.getElementById('statTotalBatches').textContent = stats.totalBatches;
+      document.getElementById('statClaimedBatches').textContent =
+        `${stats.claimedBatches} ${t('dashboard.stats.registered')}`;
+
+      document.getElementById('statTotalTickets').textContent = stats.totalTickets;
+      document.getElementById('statEligibleTickets').textContent =
+        `${stats.eligibleTickets} ${t('dashboard.stats.eligible')}`;
+
+      document.getElementById('statWinnersDrawn').textContent = stats.winnersDrawn;
+      document.getElementById('statPrizesClaimed').textContent = stats.prizesClaimed;
+
+      // Batches table
+      document.getElementById('batchCount').textContent = batches.length;
+      const batchesBody = document.getElementById('batchesBody');
+      const batchesEmpty = document.getElementById('batchesEmpty');
+
+      if (batches.length === 0) {
+        batchesBody.innerHTML = '';
+        batchesEmpty.classList.remove('hidden');
+        document.getElementById('batchesTable').classList.add('hidden');
+      } else {
+        batchesEmpty.classList.add('hidden');
+        document.getElementById('batchesTable').classList.remove('hidden');
+        batchesBody.innerHTML = batches.map(b => `
+          <tr>
+            <td><code>${b.batchId}</code></td>
+            <td>${b.label || '-'}</td>
+            <td>${b.ticketCount}</td>
+            <td>
+              <span class="status-pill status-${b.status}">
+                ${t(`dashboard.batches.status.${b.status}`)}
+              </span>
+            </td>
+            <td>${formatTime(b.claimedAt || b.createdAt)}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Winners table
+      document.getElementById('winnerCount').textContent = winners.length;
+      const winnersBody = document.getElementById('winnersBody');
+      const winnersEmpty = document.getElementById('winnersEmpty');
+
+      if (winners.length === 0) {
+        winnersBody.innerHTML = '';
+        winnersEmpty.classList.remove('hidden');
+        document.getElementById('winnersTable').classList.add('hidden');
+      } else {
+        winnersEmpty.classList.add('hidden');
+        document.getElementById('winnersTable').classList.remove('hidden');
+        winnersBody.innerHTML = winners.map(w => `
+          <tr>
+            <td><code>${w.ticketId}</code></td>
+            <td>${w.batchLabel || w.batchId}</td>
+            <td>
+              <span class="status-pill ${w.claimedAt ? 'status-prize-claimed' : 'status-pending'}">
+                ${w.claimedAt ? t('dashboard.winners.status.claimed') : t('dashboard.winners.status.pending')}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function formatDuration(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+
+      if (hours > 0) {
+        return `${hours}h ${minutes % 60}m`;
+      } else if (minutes > 0) {
+        return `${minutes}m`;
+      } else {
+        return `${seconds}s`;
+      }
+    }
+
+    function formatTime(timestamp) {
+      if (!timestamp) return '-';
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showView(view) {
+      pinView.classList.remove('active');
+      dashboardView.classList.remove('active');
+      errorView.classList.remove('active');
+
+      switch (view) {
+        case 'pin':
+          pinView.classList.add('active');
+          break;
+        case 'dashboard':
+          dashboardView.classList.add('active');
+          break;
+        case 'error':
+          errorView.classList.add('active');
+          break;
+      }
+    }
+  </script>
+</body>
+</html>

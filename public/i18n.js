@@ -436,6 +436,192 @@ const translations = {
     'ja': '無効なチケット'
   },
 
+  // Dashboard page
+  'dashboard.title': {
+    'en': 'Event Dashboard',
+    'zh-TW': '活動儀表板',
+    'ja': 'イベントダッシュボード'
+  },
+  'dashboard.enterPin': {
+    'en': 'Enter the session PIN to view dashboard',
+    'zh-TW': '請輸入活動 PIN 碼以查看儀表板',
+    'ja': 'ダッシュボードを表示するにはPINを入力'
+  },
+  'dashboard.autoRefresh': {
+    'en': 'Auto-refreshing every 2 seconds',
+    'zh-TW': '每 2 秒自動更新',
+    'ja': '2秒ごとに自動更新'
+  },
+  'dashboard.stats.batches': {
+    'en': 'Batches',
+    'zh-TW': '批次',
+    'ja': 'バッチ'
+  },
+  'dashboard.stats.tickets': {
+    'en': 'Tickets',
+    'zh-TW': '票券',
+    'ja': 'チケット'
+  },
+  'dashboard.stats.winners': {
+    'en': 'Winners',
+    'zh-TW': '中獎',
+    'ja': '当選'
+  },
+  'dashboard.stats.claimed': {
+    'en': 'Claimed',
+    'zh-TW': '已領獎',
+    'ja': '受取済'
+  },
+  'dashboard.stats.registered': {
+    'en': 'registered',
+    'zh-TW': '已登記',
+    'ja': '登録済'
+  },
+  'dashboard.stats.eligible': {
+    'en': 'eligible',
+    'zh-TW': '可抽',
+    'ja': '対象'
+  },
+  'dashboard.batches.title': {
+    'en': 'Ticket Batches',
+    'zh-TW': '票券批次',
+    'ja': 'チケットバッチ'
+  },
+  'dashboard.batches.id': {
+    'en': 'ID',
+    'zh-TW': '編號',
+    'ja': 'ID'
+  },
+  'dashboard.batches.label': {
+    'en': 'Label',
+    'zh-TW': '標籤',
+    'ja': 'ラベル'
+  },
+  'dashboard.batches.tickets': {
+    'en': 'Tickets',
+    'zh-TW': '票數',
+    'ja': 'チケット'
+  },
+  'dashboard.batches.status': {
+    'en': 'Status',
+    'zh-TW': '狀態',
+    'ja': '状態'
+  },
+  'dashboard.batches.status.claimed': {
+    'en': 'Claimed',
+    'zh-TW': '已登記',
+    'ja': '登録済'
+  },
+  'dashboard.batches.status.unclaimed': {
+    'en': 'Unclaimed',
+    'zh-TW': '未登記',
+    'ja': '未登録'
+  },
+  'dashboard.batches.time': {
+    'en': 'Time',
+    'zh-TW': '時間',
+    'ja': '時間'
+  },
+  'dashboard.batches.empty': {
+    'en': 'No batches created yet',
+    'zh-TW': '尚未建立任何批次',
+    'ja': 'バッチがまだありません'
+  },
+  'dashboard.winners.title': {
+    'en': 'Winners',
+    'zh-TW': '中獎名單',
+    'ja': '当選者'
+  },
+  'dashboard.winners.ticket': {
+    'en': 'Ticket',
+    'zh-TW': '票券',
+    'ja': 'チケット'
+  },
+  'dashboard.winners.batch': {
+    'en': 'Batch',
+    'zh-TW': '批次',
+    'ja': 'バッチ'
+  },
+  'dashboard.winners.status': {
+    'en': 'Status',
+    'zh-TW': '狀態',
+    'ja': '状態'
+  },
+  'dashboard.winners.status.claimed': {
+    'en': 'Prize Claimed',
+    'zh-TW': '已領獎',
+    'ja': '受取済'
+  },
+  'dashboard.winners.status.pending': {
+    'en': 'Pending',
+    'zh-TW': '待領取',
+    'ja': '未受取'
+  },
+  'dashboard.winners.empty': {
+    'en': 'No winners drawn yet',
+    'zh-TW': '尚未抽出任何中獎者',
+    'ja': '当選者がまだいません'
+  },
+  'dashboard.links.handout': {
+    'en': 'Hand Out Tickets',
+    'zh-TW': '發放票券',
+    'ja': 'チケット配布'
+  },
+  'dashboard.links.draw': {
+    'en': 'Draw Screen',
+    'zh-TW': '抽獎畫面',
+    'ja': '抽選画面'
+  },
+  'dashboard.links.scan': {
+    'en': 'Scan Tickets',
+    'zh-TW': '掃描票券',
+    'ja': 'チケット読取'
+  },
+
+  // State labels (short form for badges)
+  'state.OPEN': {
+    'en': 'Open',
+    'zh-TW': '開放',
+    'ja': '受付中'
+  },
+  'state.LOCKED': {
+    'en': 'Locked',
+    'zh-TW': '已鎖定',
+    'ja': 'ロック'
+  },
+  'state.DRAWING': {
+    'en': 'Drawing',
+    'zh-TW': '抽獎中',
+    'ja': '抽選中'
+  },
+  'state.CLAIMING': {
+    'en': 'Claiming',
+    'zh-TW': '兌獎中',
+    'ja': '受取中'
+  },
+  'state.CLOSED': {
+    'en': 'Closed',
+    'zh-TW': '已結束',
+    'ja': '終了'
+  },
+
+  // Common additions
+  'common.continue': {
+    'en': 'Continue',
+    'zh-TW': '繼續',
+    'ja': '続行'
+  },
+  'common.invalidPin': {
+    'en': 'Invalid PIN',
+    'zh-TW': 'PIN 碼錯誤',
+    'ja': 'PINが正しくありません'
+  },
+  'common.tryAgain': {
+    'en': 'Try Again',
+    'zh-TW': '重試',
+    'ja': '再試行'
+  },
+
   // Errors
   'error.sessionNotFound': {
     'en': 'Session not found',

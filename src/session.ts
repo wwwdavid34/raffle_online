@@ -133,6 +133,10 @@ export class RaffleSession implements DurableObject {
         return this.handleGetStatus();
       }
 
+      if (request.method === 'GET' && path === '/dashboard') {
+        return this.handleGetDashboard();
+      }
+
       if (request.method === 'POST' && path === '/verify-pin') {
         return this.handleVerifyPin(request);
       }
@@ -247,6 +251,82 @@ export class RaffleSession implements DurableObject {
       batchCount,
       claimedBatches,
       currentWinner: this.data.session.currentWinner
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  private handleGetDashboard(): Response {
+    if (!this.data.session) {
+      return new Response(JSON.stringify({ error: 'Session not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    this.updateActivity();
+
+    const batches = Object.values(this.data.batches);
+    const tickets = Object.values(this.data.tickets);
+
+    // Calculate stats
+    const totalBatches = batches.length;
+    const claimedBatches = batches.filter(b => b.status === 'claimed').length;
+    const totalTickets = tickets.length;
+
+    // Eligible tickets are from claimed batches
+    const eligibleTickets = tickets.filter(t => {
+      const batch = this.data.batches[t.batchId];
+      return batch && batch.status === 'claimed';
+    }).length;
+
+    const winnersDrawn = tickets.filter(t => t.isWinner).length;
+    const prizesClaimed = tickets.filter(t => t.isWinner && t.claimedAt).length;
+
+    // Build batch list with details
+    const batchList = batches.map(b => ({
+      batchId: b.batchId,
+      label: b.label,
+      ticketCount: b.ticketCount,
+      status: b.status,
+      createdAt: b.createdAt,
+      claimedAt: b.claimedAt
+    })).sort((a, b) => b.createdAt - a.createdAt); // Most recent first
+
+    // Build winners list
+    const winners = tickets
+      .filter(t => t.isWinner)
+      .map(t => {
+        const batch = this.data.batches[t.batchId];
+        return {
+          ticketId: t.ticketId,
+          batchId: t.batchId,
+          batchLabel: batch?.label,
+          claimedAt: t.claimedAt
+        };
+      });
+
+    return new Response(JSON.stringify({
+      session: {
+        sessionId: this.data.session.sessionId,
+        eventName: this.data.session.eventName,
+        language: this.data.session.language,
+        theme: this.data.session.theme || 'default',
+        state: this.data.session.state,
+        createdAt: this.data.session.createdAt,
+        lastActiveAt: this.data.session.lastActiveAt,
+        currentWinner: this.data.session.currentWinner
+      },
+      stats: {
+        totalBatches,
+        claimedBatches,
+        totalTickets,
+        eligibleTickets,
+        winnersDrawn,
+        prizesClaimed
+      },
+      batches: batchList,
+      winners
     }), {
       headers: { 'Content-Type': 'application/json' }
     });
