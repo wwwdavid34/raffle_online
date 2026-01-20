@@ -72,9 +72,14 @@
           <span data-i18n="draw.startDraw">Draw Winner</span>
         </button>
 
-        <button type="button" id="closeSessionBtn" class="btn btn-secondary mt-2">
-          <span data-i18n="draw.closeSession">End Raffle</span>
-        </button>
+        <div class="action-grid mt-2">
+          <button type="button" id="reopenBtn" class="btn btn-warning">
+            <span data-i18n="draw.reopen">Reopen Registration</span>
+          </button>
+          <button type="button" id="closeSessionBtn" class="btn btn-secondary">
+            <span data-i18n="draw.closeSession">End Raffle</span>
+          </button>
+        </div>
       </div>
 
       <!-- Drawing Animation -->
@@ -312,6 +317,7 @@
 
     function setupButtons() {
       document.getElementById('lockBtn').addEventListener('click', lockRegistration);
+      document.getElementById('reopenBtn').addEventListener('click', reopenRegistration);
       document.getElementById('drawBtn').addEventListener('click', drawWinner);
       document.getElementById('redrawBtn').addEventListener('click', redraw);
       document.getElementById('confirmClaimBtn').addEventListener('click', confirmClaim);
@@ -365,6 +371,29 @@
         }
 
         sessionData.state = 'LOCKED';
+        updateState();
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function reopenRegistration() {
+      const btn = document.getElementById('reopenBtn');
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`/api/session/${currentSessionId}/reopen`, {
+          method: 'POST'
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to reopen');
+        }
+
+        sessionData.state = 'OPEN';
         updateState();
       } catch (err) {
         showError(err.message);

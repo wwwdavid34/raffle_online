@@ -149,6 +149,10 @@ export class RaffleSession implements DurableObject {
         return this.handleLock();
       }
 
+      if (request.method === 'POST' && path === '/reopen') {
+        return this.handleReopen();
+      }
+
       if (request.method === 'POST' && path === '/draw') {
         return this.handleDraw();
       }
@@ -429,6 +433,30 @@ export class RaffleSession implements DurableObject {
     await this.save();
 
     return new Response(JSON.stringify({ success: true, state: 'LOCKED' }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  private async handleReopen(): Promise<Response> {
+    if (!this.data.session) {
+      return new Response(JSON.stringify({ error: 'Session not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (this.data.session.state !== 'LOCKED') {
+      return new Response(JSON.stringify({ error: 'Can only reopen a locked session' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    this.data.session.state = 'OPEN';
+    this.updateActivity();
+    await this.save();
+
+    return new Response(JSON.stringify({ success: true, state: 'OPEN' }), {
       headers: { 'Content-Type': 'application/json' }
     });
   }

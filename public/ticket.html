@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.json">
+  <title>My Raffle Ticket</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.2.2/build/qrcode.min.js"></script>
+  <style>
+    .ticket-container {
+      padding: 16px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .ticket-card {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #0056b3) 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin: 16px 0;
+      position: relative;
+    }
+    .ticket-event-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .ticket-qr-container {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+      text-align: center;
+    }
+    .ticket-qr-container canvas {
+      display: block;
+      margin: 0 auto;
+    }
+    .ticket-details {
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px dashed rgba(255,255,255,0.3);
+      padding-top: 16px;
+      margin-top: 8px;
+    }
+    .ticket-detail {
+      text-align: center;
+    }
+    .ticket-detail-label {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+    }
+    .ticket-detail-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .status-badge {
+      display: block;
+      text-align: center;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+    .status-valid {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+    .status-winner {
+      background: #ffd700;
+      color: #000;
+    }
+    .status-claimed {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.7);
+    }
+    .winner-banner {
+      background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+      color: #000;
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .winner-banner h2 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+    .action-btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .action-btn-secondary {
+      background: #fff;
+      color: #000;
+      border: 1px solid #ddd;
+    }
+    .action-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    .save-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      padding: 20px;
+      overflow: auto;
+    }
+    .save-modal.show {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .save-modal-content {
+      text-align: center;
+      color: white;
+    }
+    .save-modal-content img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .save-modal-content p {
+      margin-bottom: 20px;
+      font-size: 1rem;
+    }
+    .save-modal-close {
+      background: white;
+      color: black;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .instructions {
+      background: var(--card-bg, #f8f9fa);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .instructions h3 {
+      margin: 0 0 12px 0;
+      font-size: 1rem;
+    }
+    .instructions ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .instructions li {
+      margin: 8px 0;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Loading View -->
+    <div id="loadingView" class="view active">
+      <div class="card text-center">
+        <p data-i18n="common.loading">Loading ticket...</p>
+      </div>
+    </div>
+
+    <!-- Ticket View -->
+    <div id="ticketView" class="view">
+      <div class="ticket-container">
+        <div id="winnerBanner" class="winner-banner hidden">
+          <h2 data-i18n="ticket.winner">You're a Winner!</h2>
+          <p data-i18n="ticket.winnerInstructions">Show this ticket to claim your prize</p>
+        </div>
+
+        <div class="ticket-card" id="ticketCard">
+          <div class="ticket-event-name" id="eventName"></div>
+
+          <div class="ticket-qr-container">
+            <canvas id="ticketQR"></canvas>
+          </div>
+
+          <div class="ticket-details">
+            <div class="ticket-detail">
+              <div class="ticket-detail-label" data-i18n="ticket.batch">Batch</div>
+              <div class="ticket-detail-value" id="batchId"></div>
+            </div>
+            <div class="ticket-detail">
+              <div class="ticket-detail-label" data-i18n="ticket.tickets">Tickets</div>
+              <div class="ticket-detail-value" id="ticketCount"></div>
+            </div>
+          </div>
+
+          <div class="status-badge status-valid" id="statusBadge" data-i18n="ticket.status.valid">Valid Ticket</div>
+        </div>
+
+        <div class="action-buttons">
+          <button type="button" class="action-btn action-btn-primary" id="saveImageBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span data-i18n="ticket.saveImage">Save to Photos</span>
+          </button>
+
+          <button type="button" class="action-btn action-btn-secondary" id="shareBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            <span data-i18n="ticket.share">Share</span>
+          </button>
+        </div>
+
+        <div class="instructions" id="instructions">
+          <h3 data-i18n="ticket.howToUse">How to Use</h3>
+          <ol>
+            <li data-i18n="ticket.instruction1">Save this ticket to your photos</li>
+            <li data-i18n="ticket.instruction2">Show the QR code when your number is called</li>
+            <li data-i18n="ticket.instruction3">The host will scan to verify your ticket</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Modal (for mobile long-press saving) -->
+    <div id="saveModal" class="save-modal">
+      <div class="save-modal-content">
+        <img id="saveModalImage" src="" alt="Ticket">
+        <p data-i18n="ticket.longPressToSave">Long press the image above to save to your photos</p>
+        <button type="button" class="save-modal-close" id="saveModalClose" data-i18n="common.back">Close</button>
+      </div>
+    </div>
+
+    <!-- Error View -->
+    <div id="errorView" class="view">
+      <div class="card text-center">
+        <h2 data-i18n="ticket.invalid">Invalid Ticket</h2>
+        <p class="text-secondary" id="errorMessage"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/i18n.js"></script>
+  <script>
+    // Parse URL: /s/{sessionId}/ticket?b={batchId}&t={ticketId}&sig={signature}
+    const pathParts = window.location.pathname.split('/');
+    const urlParams = new URLSearchParams(window.location.search);
+
+    let currentSessionId = null;
+    if (pathParts[1] === 's' && pathParts[2]) {
+      currentSessionId = pathParts[2];
+    }
+
+    const batchId = urlParams.get('b');
+    const ticketId = urlParams.get('t');
+    const sig = urlParams.get('sig');
+
+    // DOM Elements
+    const loadingView = document.getElementById('loadingView');
+    const ticketView = document.getElementById('ticketView');
+    const errorView = document.getElementById('errorView');
+
+    init();
+
+    async function init() {
+      if (!currentSessionId || !batchId || !sig) {
+        showError('Missing ticket information');
+        return;
+      }
+
+      try {
+        // Get session info
+        const sessionResponse = await fetch(`/api/session/${currentSessionId}`);
+        if (!sessionResponse.ok) {
+          throw new Error('Session not found');
+        }
+        const sessionData = await sessionResponse.json();
+
+        // Set language and theme
+        setLanguage(sessionData.language);
+        if (sessionData.theme && sessionData.theme !== 'default') {
+          document.documentElement.setAttribute('data-theme', sessionData.theme);
+        }
+
+        // Try to claim the batch (this registers the participant)
+        // This will succeed if session is OPEN, or return error if already claimed/locked
+        const claimResponse = await fetch(`/api/session/${currentSessionId}/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            batchId: batchId,
+            sig: sig
+          })
+        });
+
+        const claimData = await claimResponse.json();
+        // Note: We don't throw on claim error - the batch might already be claimed
+        // or session might be locked. We still want to show the ticket.
+        if (claimResponse.ok) {
+          console.log('Batch claimed successfully');
+        } else {
+          console.log('Claim response:', claimData.error || 'Already claimed or session locked');
+        }
+
+        // Verify ticket to get current status
+        const verifyResponse = await fetch(`/api/session/${currentSessionId}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: currentSessionId,
+            batchId: batchId,
+            ticketId: ticketId !== 'batch' ? ticketId : undefined,
+            sig: sig
+          })
+        });
+
+        const verifyData = await verifyResponse.json();
+
+        // Update UI
+        document.getElementById('eventName').textContent = sessionData.eventName;
+        document.getElementById('batchId').textContent = batchId;
+        document.getElementById('ticketCount').textContent = verifyData.ticketCount || '1';
+
+        document.title = `${sessionData.eventName} - Ticket`;
+
+        // Generate QR code for verification
+        generateQRCode();
+
+        // Update status based on verification result
+        updateStatus(verifyData.result, verifyData);
+
+        showView('ticket');
+
+        // Setup buttons
+        setupButtons();
+
+      } catch (err) {
+        console.error('Error:', err);
+        showError(err.message);
+      }
+    }
+
+    function generateQRCode() {
+      // QR contains the verification payload (same as what scan page expects)
+      const qrPayload = JSON.stringify({
+        s: currentSessionId,
+        b: batchId,
+        t: ticketId || 'batch',
+        sig: sig
+      });
+
+      const canvas = document.getElementById('ticketQR');
+      QRCode.toCanvas(canvas, qrPayload, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      });
+    }
+
+    function updateStatus(result, data) {
+      const badge = document.getElementById('statusBadge');
+      const banner = document.getElementById('winnerBanner');
+
+      switch (result) {
+        case 'valid':
+          badge.textContent = t('ticket.status.winner');
+          badge.className = 'status-badge status-winner';
+          banner.classList.remove('hidden');
+          break;
+        case 'notWinner':
+          badge.textContent = t('ticket.status.valid');
+          badge.className = 'status-badge status-valid';
+          break;
+        case 'alreadyClaimed':
+          badge.textContent = t('ticket.status.claimed');
+          badge.className = 'status-badge status-claimed';
+          break;
+        default:
+          badge.textContent = t('ticket.status.valid');
+          badge.className = 'status-badge status-valid';
+      }
+    }
+
+    function setupButtons() {
+      // Save as image - show modal for long-press
+      document.getElementById('saveImageBtn').addEventListener('click', showSaveModal);
+
+      // Share button
+      document.getElementById('shareBtn').addEventListener('click', shareTicket);
+
+      // Close modal
+      document.getElementById('saveModalClose').addEventListener('click', closeSaveModal);
+      document.getElementById('saveModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('saveModal')) {
+          closeSaveModal();
+        }
+      });
+    }
+
+    async function showSaveModal() {
+      const modal = document.getElementById('saveModal');
+      const modalImage = document.getElementById('saveModalImage');
+
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 400;
+        canvas.height = 520;
+
+        // Draw background gradient
+        const gradient = ctx.createLinearGradient(0, 0, 400, 520);
+        gradient.addColorStop(0, '#007bff');
+        gradient.addColorStop(1, '#0056b3');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 400, 520);
+
+        // Draw event name
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 28px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(document.getElementById('eventName').textContent, 200, 35);
+
+        // Draw QR code background (white rounded rect)
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.moveTo(75 + 12, 70);
+        ctx.lineTo(75 + 250 - 12, 70);
+        ctx.quadraticCurveTo(75 + 250, 70, 75 + 250, 70 + 12);
+        ctx.lineTo(75 + 250, 70 + 250 - 12);
+        ctx.quadraticCurveTo(75 + 250, 70 + 250, 75 + 250 - 12, 70 + 250);
+        ctx.lineTo(75 + 12, 70 + 250);
+        ctx.quadraticCurveTo(75, 70 + 250, 75, 70 + 250 - 12);
+        ctx.lineTo(75, 70 + 12);
+        ctx.quadraticCurveTo(75, 70, 75 + 12, 70);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw the QR code
+        const qrCanvas = document.getElementById('ticketQR');
+        ctx.drawImage(qrCanvas, 100, 95, 200, 200);
+
+        // Draw separator line
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(30, 340, 340, 1);
+
+        // Draw labels
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '12px Arial, sans-serif';
+        ctx.fillText('BATCH', 130, 375);
+        ctx.fillText('TICKETS', 270, 375);
+
+        // Draw values
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 24px Arial, sans-serif';
+        ctx.fillText(batchId, 130, 410);
+        ctx.fillText(document.getElementById('ticketCount').textContent, 270, 410);
+
+        // Draw status badge
+        const badge = document.getElementById('statusBadge');
+        const isWinner = badge.classList.contains('status-winner');
+        const badgeColor = isWinner ? '#ffd700' : 'rgba(255,255,255,0.25)';
+        const badgeTextColor = isWinner ? '#000' : 'white';
+
+        ctx.fillStyle = badgeColor;
+        ctx.beginPath();
+        ctx.moveTo(100 + 20, 450);
+        ctx.lineTo(300 - 20, 450);
+        ctx.quadraticCurveTo(300, 450, 300, 450 + 20);
+        ctx.quadraticCurveTo(300, 450 + 40, 300 - 20, 450 + 40);
+        ctx.lineTo(100 + 20, 450 + 40);
+        ctx.quadraticCurveTo(100, 450 + 40, 100, 450 + 20);
+        ctx.quadraticCurveTo(100, 450, 100 + 20, 450);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = badgeTextColor;
+        ctx.font = 'bold 16px Arial, sans-serif';
+        ctx.fillText(badge.textContent, 200, 472);
+
+        // Convert to image
+        const dataUrl = canvas.toDataURL('image/png');
+        modalImage.src = dataUrl;
+        modal.classList.add('show');
+
+      } catch (err) {
+        console.error('Error creating image:', err);
+        alert('Failed to create image');
+      }
+    }
+
+    function closeSaveModal() {
+      document.getElementById('saveModal').classList.remove('show');
+    }
+
+    async function shareTicket() {
+      const shareData = {
+        title: document.getElementById('eventName').textContent + ' - Ticket',
+        text: `My raffle ticket: Batch ${batchId}`,
+        url: window.location.href
+      };
+
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          // Fallback: copy to clipboard
+          await navigator.clipboard.writeText(window.location.href);
+          alert('Link copied to clipboard!');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Share error:', err);
+        }
+      }
+    }
+
+    function showView(view) {
+      loadingView.classList.remove('active');
+      ticketView.classList.remove('active');
+      errorView.classList.remove('active');
+
+      switch (view) {
+        case 'loading':
+          loadingView.classList.add('active');
+          break;
+        case 'ticket':
+          ticketView.classList.add('active');
+          break;
+        case 'error':
+          errorView.classList.add('active');
+          break;
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('errorMessage').textContent = message;
+      showView('error');
+    }
+
+  </script>
+</body>
+</html>

@@ -142,6 +142,19 @@ app.post('/api/session/:sessionId/lock', async (c) => {
   return c.json(data, response.status as any);
 });
 
+// API: Reopen registration
+app.post('/api/session/:sessionId/reopen', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/reopen?sessionId=' + sessionId, {
+    method: 'POST'
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
 // API: Draw winner
 app.post('/api/session/:sessionId/draw', async (c) => {
   const sessionId = c.req.param('sessionId');
@@ -245,6 +258,20 @@ async function serveAsset(request: Request, env: Env, pathname?: string): Promis
   }
 }
 
+// API: Apple Wallet pass (placeholder - requires certificates)
+app.post('/api/session/:sessionId/wallet/apple', async (c) => {
+  return c.json({
+    error: 'Apple Wallet integration requires PassKit certificates. Add to home screen instead.'
+  }, 501);
+});
+
+// API: Google Wallet pass (placeholder - requires service account)
+app.post('/api/session/:sessionId/wallet/google', async (c) => {
+  return c.json({
+    error: 'Google Wallet integration requires API setup. Add to home screen instead.'
+  }, 501);
+});
+
 // Session page routes - serve HTML files (with session ID in URL)
 app.get('/s/:sessionId/handout', async (c) => {
   return serveAsset(c.req.raw, c.env, '/handout.html');
@@ -256,6 +283,10 @@ app.get('/s/:sessionId/draw', async (c) => {
 
 app.get('/s/:sessionId/scan', async (c) => {
   return serveAsset(c.req.raw, c.env, '/scan.html');
+});
+
+app.get('/s/:sessionId/ticket', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/ticket.html');
 });
 
 // Direct page routes (without session ID - will prompt for code)

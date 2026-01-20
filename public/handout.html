@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Raffle - Hand Out Tickets</title>
   <link rel="stylesheet" href="/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.2.2/build/qrcode.min.js"></script>
 </head>
 <body>
   <div id="app">
@@ -341,11 +341,11 @@
       document.getElementById('qrTickets').textContent =
         `${batch.ticketCount} ${t('handout.tickets')}`;
 
-      // Generate QR code
-      const payload = JSON.stringify(batch.qrPayload);
+      // Generate QR code with URL (scannable by any QR reader)
+      const ticketUrl = `${window.location.origin}/s/${currentSessionId}/ticket?b=${batch.batchId}&t=batch&sig=${batch.qrPayload.sig}`;
       const canvas = document.getElementById('qrCanvas');
 
-      QRCode.toCanvas(canvas, payload, {
+      QRCode.toCanvas(canvas, ticketUrl, {
         width: 250,
         margin: 2,
         color: { dark: '#000000', light: '#ffffff' }

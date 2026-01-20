@@ -229,6 +229,11 @@ const translations = {
     'zh-TW': '結束抽獎',
     'ja': '抽選終了'
   },
+  'draw.reopen': {
+    'en': 'Reopen Registration',
+    'zh-TW': '重新開放登記',
+    'ja': '受付を再開'
+  },
   'draw.waitingToDraw': {
     'en': 'Ready to draw',
     'zh-TW': '準備抽獎',
@@ -307,6 +312,128 @@ const translations = {
     'en': 'Thank you for participating in this raffle.',
     'zh-TW': '感謝您參與本次抽獎活動。',
     'ja': 'ご参加いただきありがとうございました。'
+  },
+
+  // Ticket page
+  'ticket.winner': {
+    'en': "You're a Winner!",
+    'zh-TW': '恭喜中獎！',
+    'ja': '当選しました！'
+  },
+  'ticket.winnerInstructions': {
+    'en': 'Show this ticket to claim your prize',
+    'zh-TW': '請出示此票券領取獎品',
+    'ja': 'このチケットを提示して景品をお受け取りください'
+  },
+  'ticket.batch': {
+    'en': 'Batch',
+    'zh-TW': '批次',
+    'ja': 'バッチ'
+  },
+  'ticket.tickets': {
+    'en': 'Tickets',
+    'zh-TW': '票數',
+    'ja': 'チケット'
+  },
+  'ticket.status.valid': {
+    'en': 'Valid',
+    'zh-TW': '有效',
+    'ja': '有効'
+  },
+  'ticket.status.winner': {
+    'en': 'WINNER',
+    'zh-TW': '中獎',
+    'ja': '当選'
+  },
+  'ticket.status.claimed': {
+    'en': 'Claimed',
+    'zh-TW': '已兌獎',
+    'ja': '受取済み'
+  },
+  'ticket.saveImage': {
+    'en': 'Save to Photos',
+    'zh-TW': '儲存到相簿',
+    'ja': '写真に保存'
+  },
+  'ticket.share': {
+    'en': 'Share',
+    'zh-TW': '分享',
+    'ja': '共有'
+  },
+  'ticket.howToUse': {
+    'en': 'How to Use',
+    'zh-TW': '使用方式',
+    'ja': '使い方'
+  },
+  'ticket.instruction1': {
+    'en': 'Save this ticket to your photos',
+    'zh-TW': '將此票券儲存到相簿',
+    'ja': 'このチケットを写真に保存'
+  },
+  'ticket.instruction2': {
+    'en': 'Show the QR code when your number is called',
+    'zh-TW': '中獎時出示 QR Code',
+    'ja': '当選時にQRコードを提示'
+  },
+  'ticket.instruction3': {
+    'en': 'The host will scan to verify your ticket',
+    'zh-TW': '主持人將掃描驗證您的票券',
+    'ja': 'ホストがチケットを確認します'
+  },
+  'ticket.longPressToSave': {
+    'en': 'Long press the image above to save to your photos',
+    'zh-TW': '長按上方圖片以儲存到相簿',
+    'ja': '画像を長押しして写真に保存'
+  },
+  'ticket.addToHomeScreen': {
+    'en': 'Add to Home Screen',
+    'zh-TW': '加入主畫面',
+    'ja': 'ホーム画面に追加'
+  },
+  'ticket.iosStep1': {
+    'en': 'Tap the Share button at the bottom of Safari',
+    'zh-TW': '點擊 Safari 底部的「分享」按鈕',
+    'ja': 'Safari下部の共有ボタンをタップ'
+  },
+  'ticket.iosStep2': {
+    'en': 'Scroll down and tap "Add to Home Screen"',
+    'zh-TW': '向下滑動並點擊「加入主畫面」',
+    'ja': '下にスクロールして「ホーム画面に追加」をタップ'
+  },
+  'ticket.iosStep3': {
+    'en': 'Tap "Add" to confirm',
+    'zh-TW': '點擊「加入」確認',
+    'ja': '「追加」をタップして確認'
+  },
+  'ticket.androidStep1': {
+    'en': 'Tap the menu (three dots) in your browser',
+    'zh-TW': '點擊瀏覽器右上角的選單（三個點）',
+    'ja': 'ブラウザのメニュー（3点）をタップ'
+  },
+  'ticket.androidStep2': {
+    'en': 'Tap "Add to Home screen" or "Install app"',
+    'zh-TW': '點擊「加入主畫面」或「安裝應用程式」',
+    'ja': '「ホーム画面に追加」または「アプリをインストール」をタップ'
+  },
+  'ticket.androidStep3': {
+    'en': 'Tap "Add" to confirm',
+    'zh-TW': '點擊「加入」確認',
+    'ja': '「追加」をタップして確認'
+  },
+  'ticket.installPrompt': {
+    'en': 'Install this ticket to your home screen for easy access',
+    'zh-TW': '將此票券安裝到主畫面以便快速存取',
+    'ja': 'このチケットをホーム画面に追加して簡単にアクセス'
+  },
+  'ticket.install': {
+    'en': 'Install',
+    'zh-TW': '安裝',
+    'ja': 'インストール'
+  },
+  'ticket.invalid': {
+    'en': 'Invalid Ticket',
+    'zh-TW': '無效票券',
+    'ja': '無効なチケット'
   },
 
   // Errors
