@@ -81,9 +81,9 @@ const translations = {
     'ja': '言語'
   },
   'session.create.pin': {
-    'en': 'Host PIN (4-6 digits)',
-    'zh-TW': '主持人 PIN (4-6 位數字)',
-    'ja': 'ホストPIN (4-6桁)'
+    'en': 'Host PIN (6 digits)',
+    'zh-TW': '主持人 PIN (6 位數字)',
+    'ja': 'ホストPIN (6桁)'
   },
   'session.create.button': {
     'en': 'Create Raffle',

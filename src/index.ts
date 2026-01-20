@@ -46,8 +46,8 @@ app.post('/api/session', async (c) => {
     return c.json({ error: 'Missing required fields' }, 400);
   }
 
-  if (body.pin.length < 4 || body.pin.length > 6 || !/^\d+$/.test(body.pin)) {
-    return c.json({ error: 'PIN must be 4-6 digits' }, 400);
+  if (body.pin.length !== 6 || !/^\d+$/.test(body.pin)) {
+    return c.json({ error: 'PIN must be exactly 6 digits' }, 400);
   }
 
   const sessionId = generateSessionId();

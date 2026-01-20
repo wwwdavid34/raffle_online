@@ -198,9 +198,9 @@
             pinInputs[index + 1].focus();
           }
 
-          // Check if all filled
+          // Check if all 6 digits filled
           const pin = Array.from(pinInputs).map(i => i.value).join('');
-          if (pin.length >= 4) {
+          if (pin.length === 6) {
             verifyPin(pin);
           }
         });
@@ -220,7 +220,7 @@
               pinInputs[i].value = digit;
             }
           });
-          if (digits.length >= 4) {
+          if (digits.length === 6) {
             verifyPin(digits);
           }
         });

@@ -229,7 +229,7 @@
           }
 
           const pin = Array.from(pinInputs).map(i => i.value).join('');
-          if (pin.length >= 4) {
+          if (pin.length === 6) {
             verifyPin(pin);
           }
         });
@@ -247,7 +247,7 @@
           digits.split('').forEach((digit, i) => {
             if (pinInputs[i]) pinInputs[i].value = digit;
           });
-          if (digits.length >= 4) verifyPin(digits);
+          if (digits.length === 6) verifyPin(digits);
         });
       });
 
