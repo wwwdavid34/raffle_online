@@ -58,20 +58,6 @@
         <input type="hidden" id="theme" value="default">
       </div>
 
-      <div class="form-group">
-        <label data-i18n="session.create.pin">Host PIN (6 digits)</label>
-        <input
-          type="password"
-          id="pin"
-          required
-          pattern="[0-9]{6}"
-          inputmode="numeric"
-          maxlength="6"
-          minlength="6"
-          placeholder="••••••"
-        >
-      </div>
-
       <button type="submit" class="btn btn-primary" id="submitBtn">
         <span data-i18n="session.create.button">Create Raffle</span>
       </button>
@@ -79,13 +65,24 @@
 
     <div class="text-center mt-3">
       <p class="text-secondary">
-        Already have a session? Go to:
+        Already have a session? Enter your 6-digit code on any page.
       </p>
-      <p class="text-secondary mt-1">
-        <code>/s/{SESSION_ID}/handout</code> - Hand out tickets<br>
-        <code>/s/{SESSION_ID}/draw</code> - Run the draw<br>
-        <code>/s/{SESSION_ID}/scan</code> - Verify winners
-      </p>
+    </div>
+
+    <!-- Success View (shown after creation) -->
+    <div id="successView" class="hidden">
+      <div class="card" style="text-align: center;">
+        <h2 style="color: var(--color-primary); margin-bottom: 1rem;">🎉 Raffle Created!</h2>
+        <p style="margin-bottom: 0.5rem;">Your Session Code (also your PIN):</p>
+        <div id="sessionCode" style="font-size: 3rem; font-weight: bold; letter-spacing: 0.5rem; color: var(--color-primary); margin: 1rem 0;"></div>
+        <p class="text-secondary" style="font-size: 0.9rem;">Share this code with your co-hosts. They'll need it to access host controls.</p>
+
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+          <a id="linkHandout" href="#" class="btn btn-primary">📤 Hand Out Tickets</a>
+          <a id="linkDraw" href="#" class="btn btn-secondary">🎲 Draw Page (Projector)</a>
+          <a id="linkScan" href="#" class="btn btn-secondary">📱 Scan & Verify</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -126,15 +123,9 @@
       const eventName = document.getElementById('eventName').value.trim();
       const language = document.getElementById('language').value;
       const theme = document.getElementById('theme').value;
-      const pin = document.getElementById('pin').value;
 
       if (!eventName) {
         showError('Please enter an event name');
-        return;
-      }
-
-      if (!/^\d{6}$/.test(pin)) {
-        showError('PIN must be exactly 6 digits');
         return;
       }
 
@@ -145,7 +136,7 @@
         const response = await fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventName, language, theme, pin })
+          body: JSON.stringify({ eventName, language, theme })
         });
 
         const data = await response.json();
@@ -154,8 +145,8 @@
           throw new Error(data.error || 'Failed to create session');
         }
 
-        // Redirect to handout page
-        window.location.href = `/s/${data.sessionId}/handout`;
+        // Show success view with session code
+        showSuccess(data.sessionId);
 
       } catch (err) {
         showError(err.message);
@@ -170,6 +161,26 @@
       setTimeout(() => {
         errorDiv.classList.add('hidden');
       }, 5000);
+    }
+
+    function showSuccess(sessionId) {
+      // Hide the form and show success view
+      document.querySelector('.home-logo').classList.add('hidden');
+      document.querySelector('.home-title').classList.add('hidden');
+      form.classList.add('hidden');
+      document.querySelector('.text-center.mt-3').classList.add('hidden');
+
+      // Show success view
+      const successView = document.getElementById('successView');
+      successView.classList.remove('hidden');
+
+      // Set session code
+      document.getElementById('sessionCode').textContent = sessionId;
+
+      // Set links
+      document.getElementById('linkHandout').href = `/s/${sessionId}/handout`;
+      document.getElementById('linkDraw').href = `/s/${sessionId}/draw`;
+      document.getElementById('linkScan').href = `/s/${sessionId}/scan`;
     }
   </script>
 </body>

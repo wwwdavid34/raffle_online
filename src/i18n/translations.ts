@@ -159,9 +159,9 @@ export const translations = {
     'ja': '発行済み合計'
   },
   'handout.enterPin': {
-    'en': 'Enter Host PIN',
-    'zh-TW': '請輸入主持人 PIN',
-    'ja': 'ホストPINを入力'
+    'en': 'Enter Session Code',
+    'zh-TW': '請輸入活動代碼',
+    'ja': 'セッションコードを入力'
   },
 
   // Draw page

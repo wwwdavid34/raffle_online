@@ -15,16 +15,13 @@ const app = new Hono<{ Bindings: Env }>();
 // Enable CORS for API endpoints
 app.use('/api/*', cors());
 
-// Generate session ID
+// Generate session ID (6-digit numeric code that also serves as PIN)
 function generateSessionId(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  const array = new Uint8Array(6);
+  const array = new Uint8Array(4);
   crypto.getRandomValues(array);
-  for (let i = 0; i < 6; i++) {
-    result += chars[array[i] % chars.length];
-  }
-  return result;
+  // Generate number between 100000 and 999999
+  const num = 100000 + (((array[0] << 24) | (array[1] << 16) | (array[2] << 8) | array[3]) >>> 0) % 900000;
+  return num.toString();
 }
 
 // Get Durable Object stub for a session
@@ -39,17 +36,13 @@ app.post('/api/session', async (c) => {
     eventName: string;
     language?: string;
     theme?: string;
-    pin: string;
   };
 
-  if (!body.eventName || !body.pin) {
+  if (!body.eventName) {
     return c.json({ error: 'Missing required fields' }, 400);
   }
 
-  if (body.pin.length !== 6 || !/^\d+$/.test(body.pin)) {
-    return c.json({ error: 'PIN must be exactly 6 digits' }, 400);
-  }
-
+  // Session ID is a 6-digit code that also serves as the PIN
   const sessionId = generateSessionId();
   const stub = getSessionStub(c.env, sessionId);
 
@@ -61,7 +54,7 @@ app.post('/api/session', async (c) => {
       eventName: body.eventName,
       language: body.language || 'en',
       theme: body.theme || 'default',
-      pin: body.pin
+      pin: sessionId  // PIN is the session ID itself
     })
   }));
 
