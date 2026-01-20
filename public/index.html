@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Raffle - Create Event</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app">
+    <div class="home-logo">🎟️</div>
+    <h1 class="home-title" data-i18n="session.create.title">Create New Raffle</h1>
+
+    <div id="error" class="error-message hidden"></div>
+
+    <form id="createForm" class="card">
+      <div class="form-group">
+        <label data-i18n="session.create.eventName">Event Name</label>
+        <input
+          type="text"
+          id="eventName"
+          required
+          maxlength="100"
+          data-i18n-placeholder="session.create.eventNamePlaceholder"
+          placeholder="Spring Festival Raffle"
+        >
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="session.create.language">Language</label>
+        <select id="language">
+          <option value="en">English</option>
+          <option value="zh-TW">繁體中文</option>
+          <option value="ja">日本語</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Theme</label>
+        <div class="theme-picker" id="themePicker">
+          <div class="theme-option selected" data-theme="default" title="Default"></div>
+          <div class="theme-option" data-theme="ocean" title="Ocean"></div>
+          <div class="theme-option" data-theme="sunset" title="Sunset"></div>
+          <div class="theme-option" data-theme="forest" title="Forest"></div>
+          <div class="theme-option" data-theme="purple" title="Purple"></div>
+          <div class="theme-option" data-theme="gold" title="Gold"></div>
+          <div class="theme-option" data-theme="rose" title="Rose"></div>
+          <div class="theme-option" data-theme="light" title="Light"></div>
+
+          <div class="theme-section-label">Occasions</div>
+          <div class="theme-option" data-theme="chinese-new-year" title="Chinese New Year"></div>
+          <div class="theme-option" data-theme="halloween" title="Halloween"></div>
+          <div class="theme-option" data-theme="christmas" title="Christmas"></div>
+          <div class="theme-option" data-theme="valentines" title="Valentine's Day"></div>
+          <div class="theme-option" data-theme="spring" title="Spring"></div>
+          <div class="theme-option" data-theme="summer" title="Summer"></div>
+        </div>
+        <input type="hidden" id="theme" value="default">
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="session.create.pin">Host PIN (4-6 digits)</label>
+        <input
+          type="password"
+          id="pin"
+          required
+          pattern="[0-9]{4,6}"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="••••"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">
+        <span data-i18n="session.create.button">Create Raffle</span>
+      </button>
+    </form>
+
+    <div class="text-center mt-3">
+      <p class="text-secondary">
+        Already have a session? Go to:
+      </p>
+      <p class="text-secondary mt-1">
+        <code>/s/{SESSION_ID}/handout</code> - Hand out tickets<br>
+        <code>/s/{SESSION_ID}/draw</code> - Run the draw<br>
+        <code>/s/{SESSION_ID}/scan</code> - Verify winners
+      </p>
+    </div>
+  </div>
+
+  <script src="/i18n.js"></script>
+  <script>
+    const form = document.getElementById('createForm');
+    const errorDiv = document.getElementById('error');
+    const submitBtn = document.getElementById('submitBtn');
+    const languageSelect = document.getElementById('language');
+    const themePicker = document.getElementById('themePicker');
+    const themeInput = document.getElementById('theme');
+
+    // Theme picker functionality
+    themePicker.addEventListener('click', (e) => {
+      const option = e.target.closest('.theme-option');
+      if (!option) return;
+
+      // Update selection
+      themePicker.querySelectorAll('.theme-option').forEach(o => o.classList.remove('selected'));
+      option.classList.add('selected');
+
+      // Update hidden input
+      const theme = option.dataset.theme;
+      themeInput.value = theme;
+
+      // Preview theme
+      document.documentElement.setAttribute('data-theme', theme === 'default' ? '' : theme);
+    });
+
+    // Update UI language when selection changes
+    languageSelect.addEventListener('change', () => {
+      setLanguage(languageSelect.value);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const eventName = document.getElementById('eventName').value.trim();
+      const language = document.getElementById('language').value;
+      const theme = document.getElementById('theme').value;
+      const pin = document.getElementById('pin').value;
+
+      if (!eventName) {
+        showError('Please enter an event name');
+        return;
+      }
+
+      if (!/^\d{4,6}$/.test(pin)) {
+        showError('PIN must be 4-6 digits');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> Creating...';
+
+      try {
+        const response = await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventName, language, theme, pin })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create session');
+        }
+
+        // Redirect to handout page
+        window.location.href = `/s/${data.sessionId}/handout`;
+
+      } catch (err) {
+        showError(err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span data-i18n="session.create.button">Create Raffle</span>`;
+      }
+    });
+
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.classList.remove('hidden');
+      setTimeout(() => {
+        errorDiv.classList.add('hidden');
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

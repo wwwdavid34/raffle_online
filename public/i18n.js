@@ -1,0 +1,366 @@
+// i18n translations for frontend
+const translations = {
+  // Common
+  'common.appName': {
+    'en': 'Raffle',
+    'zh-TW': '抽獎',
+    'ja': '抽選'
+  },
+  'common.loading': {
+    'en': 'Loading...',
+    'zh-TW': '載入中...',
+    'ja': '読み込み中...'
+  },
+  'common.error': {
+    'en': 'Error',
+    'zh-TW': '錯誤',
+    'ja': 'エラー'
+  },
+  'common.cancel': {
+    'en': 'Cancel',
+    'zh-TW': '取消',
+    'ja': 'キャンセル'
+  },
+  'common.confirm': {
+    'en': 'Confirm',
+    'zh-TW': '確認',
+    'ja': '確認'
+  },
+  'common.back': {
+    'en': 'Back',
+    'zh-TW': '返回',
+    'ja': '戻る'
+  },
+
+  // Session states
+  'session.state.open': {
+    'en': 'Open',
+    'zh-TW': '開放中',
+    'ja': '受付中'
+  },
+  'session.state.locked': {
+    'en': 'Registration Closed',
+    'zh-TW': '登記已截止',
+    'ja': '受付終了'
+  },
+  'session.state.drawing': {
+    'en': 'Drawing...',
+    'zh-TW': '抽獎中...',
+    'ja': '抽選中...'
+  },
+  'session.state.claiming': {
+    'en': 'Claiming',
+    'zh-TW': '兌獎中',
+    'ja': '受取中'
+  },
+  'session.state.closed': {
+    'en': 'Closed',
+    'zh-TW': '已結束',
+    'ja': '終了'
+  },
+
+  // Session creation
+  'session.create.title': {
+    'en': 'Create New Raffle',
+    'zh-TW': '建立新抽獎',
+    'ja': '新規抽選作成'
+  },
+  'session.create.eventName': {
+    'en': 'Event Name',
+    'zh-TW': '活動名稱',
+    'ja': 'イベント名'
+  },
+  'session.create.eventNamePlaceholder': {
+    'en': 'Spring Festival Raffle',
+    'zh-TW': '春季祭典抽獎',
+    'ja': '春祭り抽選'
+  },
+  'session.create.language': {
+    'en': 'Language',
+    'zh-TW': '語言',
+    'ja': '言語'
+  },
+  'session.create.pin': {
+    'en': 'Host PIN (4-6 digits)',
+    'zh-TW': '主持人 PIN (4-6 位數字)',
+    'ja': 'ホストPIN (4-6桁)'
+  },
+  'session.create.button': {
+    'en': 'Create Raffle',
+    'zh-TW': '建立抽獎',
+    'ja': '抽選を作成'
+  },
+
+  // Handout page
+  'handout.title': {
+    'en': 'Hand Out Tickets',
+    'zh-TW': '發放票券',
+    'ja': 'チケット配布'
+  },
+  'handout.ticketCount': {
+    'en': 'Number of Tickets',
+    'zh-TW': '票數',
+    'ja': 'チケット数'
+  },
+  'handout.label': {
+    'en': 'Label (optional)',
+    'zh-TW': '標籤 (選填)',
+    'ja': 'ラベル (任意)'
+  },
+  'handout.labelPlaceholder': {
+    'en': 'Family of 4',
+    'zh-TW': '一家四口',
+    'ja': '4人家族'
+  },
+  'handout.createBatch': {
+    'en': 'Create Tickets',
+    'zh-TW': '建立票券',
+    'ja': 'チケット作成'
+  },
+  'handout.batchId': {
+    'en': 'Batch ID',
+    'zh-TW': '批次編號',
+    'ja': 'バッチID'
+  },
+  'handout.tickets': {
+    'en': 'Tickets',
+    'zh-TW': '票數',
+    'ja': 'チケット'
+  },
+  'handout.takePhoto': {
+    'en': 'Take a photo of this QR code to keep your ticket.',
+    'zh-TW': '請拍下此 QR Code 作為您的票券。',
+    'ja': 'このQRコードを撮影してチケットとして保管してください。'
+  },
+  'handout.status.unclaimed': {
+    'en': 'Waiting for claim...',
+    'zh-TW': '等待領取中...',
+    'ja': '受取待機中...'
+  },
+  'handout.status.claimed': {
+    'en': 'Claimed!',
+    'zh-TW': '已領取！',
+    'ja': '受取済み！'
+  },
+  'handout.nextBatch': {
+    'en': 'Next Batch',
+    'zh-TW': '下一批',
+    'ja': '次のバッチ'
+  },
+  'handout.totalIssued': {
+    'en': 'Total Issued',
+    'zh-TW': '已發放總數',
+    'ja': '発行済み合計'
+  },
+  'handout.enterPin': {
+    'en': 'Enter Host PIN',
+    'zh-TW': '請輸入主持人 PIN',
+    'ja': 'ホストPINを入力'
+  },
+
+  // Draw page
+  'draw.title': {
+    'en': 'Raffle Draw',
+    'zh-TW': '抽獎',
+    'ja': '抽選'
+  },
+  'draw.ticketCount': {
+    'en': 'Total Tickets',
+    'zh-TW': '總票數',
+    'ja': '総チケット数'
+  },
+  'draw.availableTickets': {
+    'en': 'Available',
+    'zh-TW': '可抽取',
+    'ja': '残り'
+  },
+  'draw.lockRegistration': {
+    'en': 'Lock Registration',
+    'zh-TW': '截止登記',
+    'ja': '受付終了'
+  },
+  'draw.startDraw': {
+    'en': 'Draw Winner',
+    'zh-TW': '開始抽獎',
+    'ja': '抽選開始'
+  },
+  'draw.winner': {
+    'en': 'WINNER',
+    'zh-TW': '中獎者',
+    'ja': '当選者'
+  },
+  'draw.batch': {
+    'en': 'Batch',
+    'zh-TW': '批次',
+    'ja': 'バッチ'
+  },
+  'draw.ticket': {
+    'en': 'Ticket',
+    'zh-TW': '票券',
+    'ja': 'チケット'
+  },
+  'draw.claimNow': {
+    'en': 'Please come forward to claim your prize!',
+    'zh-TW': '請上台領獎！',
+    'ja': '景品をお受け取りください！'
+  },
+  'draw.timeRemaining': {
+    'en': 'Time remaining',
+    'zh-TW': '剩餘時間',
+    'ja': '残り時間'
+  },
+  'draw.redraw': {
+    'en': 'Redraw',
+    'zh-TW': '重抽',
+    'ja': '再抽選'
+  },
+  'draw.confirmClaim': {
+    'en': 'Confirm Claim',
+    'zh-TW': '確認兌獎',
+    'ja': '受取確認'
+  },
+  'draw.nextPrize': {
+    'en': 'Next Prize',
+    'zh-TW': '下一個獎項',
+    'ja': '次の景品'
+  },
+  'draw.closeSession': {
+    'en': 'End Raffle',
+    'zh-TW': '結束抽獎',
+    'ja': '抽選終了'
+  },
+  'draw.waitingToDraw': {
+    'en': 'Ready to draw',
+    'zh-TW': '準備抽獎',
+    'ja': '抽選準備完了'
+  },
+  'draw.registrationOpen': {
+    'en': 'Registration is open',
+    'zh-TW': '登記開放中',
+    'ja': '受付中'
+  },
+  'draw.noTickets': {
+    'en': 'No tickets available',
+    'zh-TW': '沒有可用票券',
+    'ja': 'チケットがありません'
+  },
+
+  // Scan page
+  'scan.title': {
+    'en': 'Verify Ticket',
+    'zh-TW': '驗證票券',
+    'ja': 'チケット確認'
+  },
+  'scan.instruction': {
+    'en': 'Scan the winning ticket QR code',
+    'zh-TW': '掃描中獎票券的 QR Code',
+    'ja': '当選チケットのQRコードを読み取り'
+  },
+  'scan.result.valid': {
+    'en': 'Valid Winner!',
+    'zh-TW': '中獎確認！',
+    'ja': '当選確認！'
+  },
+  'scan.result.notWinner': {
+    'en': 'Not a winning ticket',
+    'zh-TW': '非中獎票券',
+    'ja': '当選していません'
+  },
+  'scan.result.wrongEvent': {
+    'en': 'Wrong event',
+    'zh-TW': '活動不符',
+    'ja': '別のイベントです'
+  },
+  'scan.result.alreadyClaimed': {
+    'en': 'Already claimed',
+    'zh-TW': '已兌獎',
+    'ja': '受取済み'
+  },
+  'scan.result.expired': {
+    'en': 'Claim window expired',
+    'zh-TW': '兌獎時間已過',
+    'ja': '受取期限切れ'
+  },
+  'scan.result.invalid': {
+    'en': 'Invalid ticket',
+    'zh-TW': '無效票券',
+    'ja': '無効なチケット'
+  },
+  'scan.markClaimed': {
+    'en': 'Mark as Claimed',
+    'zh-TW': '標記為已兌獎',
+    'ja': '受取済みにする'
+  },
+  'scan.scanAnother': {
+    'en': 'Scan Another',
+    'zh-TW': '掃描下一張',
+    'ja': '次を読み取り'
+  },
+
+  // Thank you page
+  'thanks.title': {
+    'en': 'Thank You!',
+    'zh-TW': '感謝參與！',
+    'ja': 'ありがとうございました！'
+  },
+  'thanks.message': {
+    'en': 'Thank you for participating in this raffle.',
+    'zh-TW': '感謝您參與本次抽獎活動。',
+    'ja': 'ご参加いただきありがとうございました。'
+  },
+
+  // Errors
+  'error.sessionNotFound': {
+    'en': 'Session not found',
+    'zh-TW': '找不到此活動',
+    'ja': 'セッションが見つかりません'
+  },
+  'error.invalidPin': {
+    'en': 'Invalid PIN',
+    'zh-TW': 'PIN 碼錯誤',
+    'ja': 'PINが正しくありません'
+  },
+  'error.sessionClosed': {
+    'en': 'This raffle has ended',
+    'zh-TW': '此抽獎已結束',
+    'ja': 'この抽選は終了しました'
+  },
+  'error.registrationClosed': {
+    'en': 'Registration is closed',
+    'zh-TW': '登記已截止',
+    'ja': '受付は終了しました'
+  }
+};
+
+// Current language
+let currentLang = 'en';
+
+// Get translation
+function t(key) {
+  const entry = translations[key];
+  if (!entry) {
+    console.warn('Missing translation:', key);
+    return key;
+  }
+  return entry[currentLang] || entry['en'] || key;
+}
+
+// Set language
+function setLanguage(lang) {
+  currentLang = lang;
+  // Update all elements with data-i18n attribute
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  // Update placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+}
+
+// Get current language
+function getLanguage() {
+  return currentLang;
+}

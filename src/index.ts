@@ -1,0 +1,273 @@
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { RaffleSession } from './session';
+
+export { RaffleSession };
+
+interface Env {
+  RAFFLE_SESSION: DurableObjectNamespace;
+  HMAC_SECRET: string;
+  ASSETS: Fetcher;
+}
+
+const app = new Hono<{ Bindings: Env }>();
+
+// Enable CORS for API endpoints
+app.use('/api/*', cors());
+
+// Generate session ID
+function generateSessionId(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  const array = new Uint8Array(6);
+  crypto.getRandomValues(array);
+  for (let i = 0; i < 6; i++) {
+    result += chars[array[i] % chars.length];
+  }
+  return result;
+}
+
+// Get Durable Object stub for a session
+function getSessionStub(env: Env, sessionId: string): DurableObjectStub {
+  const id = env.RAFFLE_SESSION.idFromName(sessionId);
+  return env.RAFFLE_SESSION.get(id);
+}
+
+// API: Create new session
+app.post('/api/session', async (c) => {
+  const body = await c.req.json() as {
+    eventName: string;
+    language?: string;
+    theme?: string;
+    pin: string;
+  };
+
+  if (!body.eventName || !body.pin) {
+    return c.json({ error: 'Missing required fields' }, 400);
+  }
+
+  if (body.pin.length < 4 || body.pin.length > 6 || !/^\d+$/.test(body.pin)) {
+    return c.json({ error: 'PIN must be 4-6 digits' }, 400);
+  }
+
+  const sessionId = generateSessionId();
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/create?sessionId=' + sessionId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId,
+      eventName: body.eventName,
+      language: body.language || 'en',
+      theme: body.theme || 'default',
+      pin: body.pin
+    })
+  }));
+
+  if (!response.ok) {
+    const error = await response.json();
+    return c.json(error, response.status as any);
+  }
+
+  return c.json({ sessionId });
+});
+
+// API: Get session status
+app.get('/api/session/:sessionId', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/status?sessionId=' + sessionId));
+  const data = await response.json();
+
+  if (!response.ok) {
+    return c.json(data, response.status as any);
+  }
+
+  return c.json(data);
+});
+
+// API: Verify PIN
+app.post('/api/session/:sessionId/verify-pin', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { pin: string };
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/verify-pin?sessionId=' + sessionId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Create ticket batch
+app.post('/api/session/:sessionId/batch', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { ticketCount: number; label?: string };
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/create-batch?sessionId=' + sessionId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Claim batch (participant scans QR)
+app.post('/api/session/:sessionId/claim', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { batchId: string; sig: string };
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/claim-batch?sessionId=' + sessionId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Lock registration
+app.post('/api/session/:sessionId/lock', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/lock?sessionId=' + sessionId, {
+    method: 'POST'
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Draw winner
+app.post('/api/session/:sessionId/draw', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/draw?sessionId=' + sessionId, {
+    method: 'POST'
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Redraw
+app.post('/api/session/:sessionId/redraw', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/redraw?sessionId=' + sessionId, {
+    method: 'POST'
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Confirm claim (host confirms winner received prize)
+app.post('/api/session/:sessionId/confirm-claim', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/confirm-claim?sessionId=' + sessionId, {
+    method: 'POST'
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Close session
+app.post('/api/session/:sessionId/close', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/close?sessionId=' + sessionId, {
+    method: 'POST'
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Verify ticket (for scanning)
+app.post('/api/session/:sessionId/verify', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as {
+    ticketId?: string;
+    batchId: string;
+    sig: string;
+    sessionId: string;
+  };
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/verify-ticket?sessionId=' + sessionId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// API: Mark ticket as claimed
+app.post('/api/session/:sessionId/mark-claimed', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { ticketId: string };
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/mark-claimed?sessionId=' + sessionId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
+// Helper to serve static assets
+async function serveAsset(request: Request, env: Env, pathname?: string): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    if (pathname) {
+      url.pathname = pathname;
+    }
+    return await env.ASSETS.fetch(new Request(url.toString(), request));
+  } catch (e: any) {
+    console.error('Asset error:', e?.message || e);
+    return new Response('Not found', { status: 404 });
+  }
+}
+
+// Session page routes - serve HTML files
+app.get('/s/:sessionId/handout', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/handout.html');
+});
+
+app.get('/s/:sessionId/draw', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/draw.html');
+});
+
+app.get('/s/:sessionId/scan', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/scan.html');
+});
+
+// Serve static files for all other routes
+app.get('*', async (c) => {
+  return serveAsset(c.req.raw, c.env);
+});
+
+export default app;

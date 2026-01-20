@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Raffle - Hand Out Tickets</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- PIN Entry View -->
+    <div id="pinView" class="view active">
+      <h1 data-i18n="handout.enterPin">Enter Host PIN</h1>
+      <div id="pinError" class="error-message hidden"></div>
+
+      <div class="card">
+        <div class="pin-input-container">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="0">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="1">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="2">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="3">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="4">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="5">
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Handout View -->
+    <div id="mainView" class="view">
+      <div class="session-header">
+        <div class="session-event-name" id="eventName"></div>
+        <div class="session-id" id="sessionId"></div>
+        <div class="badge badge-success mt-1" id="sessionState"></div>
+      </div>
+
+      <div id="error" class="error-message hidden"></div>
+
+      <!-- Create Batch Form -->
+      <div id="createBatchView" class="card">
+        <h2 data-i18n="handout.title">Hand Out Tickets</h2>
+
+        <div class="form-group">
+          <label data-i18n="handout.ticketCount">Number of Tickets</label>
+          <div class="number-stepper">
+            <button type="button" id="decreaseBtn">-</button>
+            <input type="number" id="ticketCount" value="1" min="1" max="20" readonly>
+            <button type="button" id="increaseBtn">+</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="handout.label">Label (optional)</label>
+          <input
+            type="text"
+            id="batchLabel"
+            maxlength="50"
+            data-i18n-placeholder="handout.labelPlaceholder"
+            placeholder="Family of 4"
+          >
+        </div>
+
+        <button type="button" id="createBatchBtn" class="btn btn-primary">
+          <span data-i18n="handout.createBatch">Create Tickets</span>
+        </button>
+
+        <div class="stats-grid mt-3">
+          <div class="stat-card">
+            <div class="stat-value" id="totalTickets">0</div>
+            <div class="stat-label" data-i18n="handout.totalIssued">Total Issued</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="totalBatches">0</div>
+            <div class="stat-label" data-i18n="handout.batchId">Batches</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Display View -->
+      <div id="qrDisplayView" class="card hidden">
+        <div class="qr-container" id="qrContainer">
+          <div class="qr-info">
+            <div id="qrEventName" class="mb-1"></div>
+          </div>
+          <canvas id="qrCanvas"></canvas>
+          <div class="qr-info">
+            <div class="qr-batch-id" id="qrBatchId"></div>
+            <div class="qr-tickets" id="qrTickets"></div>
+          </div>
+        </div>
+
+        <div class="photo-instruction" data-i18n="handout.takePhoto">
+          Take a photo of this QR code to keep your ticket.
+        </div>
+
+        <div class="text-center mt-2">
+          <span class="badge badge-warning" id="batchStatus" data-i18n="handout.status.unclaimed">
+            Waiting for claim...
+          </span>
+        </div>
+
+        <button type="button" id="nextBatchBtn" class="btn btn-success mt-3">
+          <span data-i18n="handout.nextBatch">Next Batch</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Closed View -->
+    <div id="closedView" class="view">
+      <div class="card text-center">
+        <h1 data-i18n="error.registrationClosed">Registration is closed</h1>
+        <p class="text-secondary mt-2" data-i18n="session.state.locked">Registration Closed</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/i18n.js"></script>
+  <script>
+    // Get session ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const sessionId = pathParts[2];
+
+    let sessionData = null;
+    let currentBatch = null;
+    let pinVerified = false;
+
+    // DOM Elements
+    const pinView = document.getElementById('pinView');
+    const mainView = document.getElementById('mainView');
+    const closedView = document.getElementById('closedView');
+    const createBatchView = document.getElementById('createBatchView');
+    const qrDisplayView = document.getElementById('qrDisplayView');
+    const pinInputs = document.querySelectorAll('.pin-input');
+    const pinError = document.getElementById('pinError');
+    const errorDiv = document.getElementById('error');
+
+    // Initialize
+    init();
+
+    async function init() {
+      try {
+        const response = await fetch(`/api/session/${sessionId}`);
+        if (!response.ok) {
+          throw new Error('Session not found');
+        }
+        sessionData = await response.json();
+        setLanguage(sessionData.language);
+
+        // Apply theme
+        if (sessionData.theme && sessionData.theme !== 'default') {
+          document.documentElement.setAttribute('data-theme', sessionData.theme);
+        }
+
+        // Update UI
+        document.getElementById('eventName').textContent = sessionData.eventName;
+        document.getElementById('sessionId').textContent = `Session: ${sessionId}`;
+        document.getElementById('qrEventName').textContent = sessionData.eventName;
+        updateStats();
+
+        // Check session state
+        if (sessionData.state !== 'OPEN') {
+          showView('closed');
+        }
+      } catch (err) {
+        showError(err.message);
+      }
+
+      setupPinInputs();
+      setupNumberStepper();
+      setupButtons();
+    }
+
+    function showView(view) {
+      pinView.classList.remove('active');
+      mainView.classList.remove('active');
+      closedView.classList.remove('active');
+
+      switch (view) {
+        case 'pin':
+          pinView.classList.add('active');
+          break;
+        case 'main':
+          mainView.classList.add('active');
+          break;
+        case 'closed':
+          closedView.classList.add('active');
+          break;
+      }
+    }
+
+    function setupPinInputs() {
+      pinInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          const value = e.target.value.replace(/\D/g, '');
+          e.target.value = value;
+
+          if (value && index < pinInputs.length - 1) {
+            pinInputs[index + 1].focus();
+          }
+
+          // Check if all filled
+          const pin = Array.from(pinInputs).map(i => i.value).join('');
+          if (pin.length >= 4) {
+            verifyPin(pin);
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            pinInputs[index - 1].focus();
+          }
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          const digits = paste.replace(/\D/g, '').slice(0, 6);
+          digits.split('').forEach((digit, i) => {
+            if (pinInputs[i]) {
+              pinInputs[i].value = digit;
+            }
+          });
+          if (digits.length >= 4) {
+            verifyPin(digits);
+          }
+        });
+      });
+
+      // Focus first input
+      pinInputs[0].focus();
+    }
+
+    async function verifyPin(pin) {
+      try {
+        const response = await fetch(`/api/session/${sessionId}/verify-pin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin })
+        });
+
+        const data = await response.json();
+
+        if (data.valid) {
+          pinVerified = true;
+          showView('main');
+        } else {
+          pinError.textContent = t('error.invalidPin');
+          pinError.classList.remove('hidden');
+          pinInputs.forEach(i => i.value = '');
+          pinInputs[0].focus();
+        }
+      } catch (err) {
+        pinError.textContent = err.message;
+        pinError.classList.remove('hidden');
+      }
+    }
+
+    function setupNumberStepper() {
+      const ticketCount = document.getElementById('ticketCount');
+      const decreaseBtn = document.getElementById('decreaseBtn');
+      const increaseBtn = document.getElementById('increaseBtn');
+
+      decreaseBtn.addEventListener('click', () => {
+        const val = parseInt(ticketCount.value);
+        if (val > 1) ticketCount.value = val - 1;
+      });
+
+      increaseBtn.addEventListener('click', () => {
+        const val = parseInt(ticketCount.value);
+        if (val < 20) ticketCount.value = val + 1;
+      });
+    }
+
+    function setupButtons() {
+      document.getElementById('createBatchBtn').addEventListener('click', createBatch);
+      document.getElementById('nextBatchBtn').addEventListener('click', resetToCreate);
+    }
+
+    async function createBatch() {
+      const ticketCount = parseInt(document.getElementById('ticketCount').value);
+      const label = document.getElementById('batchLabel').value.trim();
+
+      const btn = document.getElementById('createBatchBtn');
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`/api/session/${sessionId}/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticketCount, label: label || undefined })
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to create batch');
+        }
+
+        currentBatch = await response.json();
+        showQRCode(currentBatch);
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showQRCode(batch) {
+      createBatchView.classList.add('hidden');
+      qrDisplayView.classList.remove('hidden');
+
+      document.getElementById('qrBatchId').textContent = batch.batchId;
+      document.getElementById('qrTickets').textContent =
+        `${batch.ticketCount} ${t('handout.tickets')}`;
+
+      // Generate QR code
+      const payload = JSON.stringify(batch.qrPayload);
+      const canvas = document.getElementById('qrCanvas');
+
+      QRCode.toCanvas(canvas, payload, {
+        width: 250,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      });
+
+      // Update batch status
+      document.getElementById('batchStatus').textContent = t('handout.status.unclaimed');
+      document.getElementById('batchStatus').className = 'badge badge-warning';
+
+      // Poll for claim status
+      pollBatchStatus(batch.batchId);
+    }
+
+    async function pollBatchStatus(batchId) {
+      const interval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/session/${sessionId}`);
+          if (!response.ok) return;
+
+          const data = await response.json();
+          updateStats(data);
+
+          // Check if batch was claimed
+          if (data.claimedBatches > sessionData.claimedBatches) {
+            document.getElementById('batchStatus').textContent = t('handout.status.claimed');
+            document.getElementById('batchStatus').className = 'badge badge-success';
+            clearInterval(interval);
+          }
+
+          sessionData = data;
+
+          // Check if session closed
+          if (data.state !== 'OPEN') {
+            clearInterval(interval);
+            showView('closed');
+          }
+        } catch (err) {
+          console.error('Poll error:', err);
+        }
+      }, 2000);
+
+      // Store interval for cleanup
+      qrDisplayView.dataset.pollInterval = interval;
+    }
+
+    function resetToCreate() {
+      // Clear polling
+      const interval = qrDisplayView.dataset.pollInterval;
+      if (interval) clearInterval(parseInt(interval));
+
+      createBatchView.classList.remove('hidden');
+      qrDisplayView.classList.add('hidden');
+
+      document.getElementById('ticketCount').value = 1;
+      document.getElementById('batchLabel').value = '';
+      currentBatch = null;
+    }
+
+    function updateStats(data = sessionData) {
+      if (!data) return;
+      document.getElementById('totalTickets').textContent = data.ticketCount || 0;
+      document.getElementById('totalBatches').textContent = data.batchCount || 0;
+      document.getElementById('sessionState').textContent = t(`session.state.${data.state.toLowerCase()}`);
+    }
+
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.classList.remove('hidden');
+      setTimeout(() => {
+        errorDiv.classList.add('hidden');
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

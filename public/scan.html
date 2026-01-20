@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Raffle - Verify Ticket</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- PIN Entry View -->
+    <div id="pinView" class="view active">
+      <h1 data-i18n="handout.enterPin">Enter Host PIN</h1>
+      <div id="pinError" class="error-message hidden"></div>
+
+      <div class="card">
+        <div class="pin-input-container">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="0">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="1">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="2">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="3">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="4">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="5">
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Scan View -->
+    <div id="mainView" class="view">
+      <div class="session-header">
+        <div class="session-event-name" id="eventName"></div>
+        <div class="session-id" id="sessionId"></div>
+      </div>
+
+      <h1 data-i18n="scan.title">Verify Ticket</h1>
+
+      <div id="error" class="error-message hidden"></div>
+
+      <!-- Scanner View -->
+      <div id="scannerView">
+        <p class="text-center text-secondary mb-2" data-i18n="scan.instruction">
+          Scan the winning ticket QR code
+        </p>
+
+        <div class="scanner-container">
+          <div id="reader"></div>
+        </div>
+      </div>
+
+      <!-- Result View -->
+      <div id="resultView" class="hidden">
+        <!-- Valid Result -->
+        <div id="validResult" class="scan-result valid hidden">
+          <div class="scan-result-icon">&#10004;</div>
+          <div class="scan-result-message" data-i18n="scan.result.valid">Valid Winner!</div>
+          <div class="mt-2">
+            <span data-i18n="draw.ticket">Ticket</span>: <strong id="validTicketId"></strong>
+          </div>
+        </div>
+
+        <!-- Invalid Results -->
+        <div id="notWinnerResult" class="scan-result invalid hidden">
+          <div class="scan-result-icon">&#10008;</div>
+          <div class="scan-result-message" data-i18n="scan.result.notWinner">Not a winning ticket</div>
+        </div>
+
+        <div id="wrongEventResult" class="scan-result invalid hidden">
+          <div class="scan-result-icon">&#10008;</div>
+          <div class="scan-result-message" data-i18n="scan.result.wrongEvent">Wrong event</div>
+        </div>
+
+        <div id="alreadyClaimedResult" class="scan-result invalid hidden">
+          <div class="scan-result-icon">&#10008;</div>
+          <div class="scan-result-message" data-i18n="scan.result.alreadyClaimed">Already claimed</div>
+        </div>
+
+        <div id="invalidResult" class="scan-result invalid hidden">
+          <div class="scan-result-icon">&#10008;</div>
+          <div class="scan-result-message" data-i18n="scan.result.invalid">Invalid ticket</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-grid mt-3" id="resultActions">
+          <button type="button" id="markClaimedBtn" class="btn btn-success hidden">
+            <span data-i18n="scan.markClaimed">Mark as Claimed</span>
+          </button>
+          <button type="button" id="scanAnotherBtn" class="btn btn-primary">
+            <span data-i18n="scan.scanAnother">Scan Another</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/i18n.js"></script>
+  <script>
+    // Get session ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const sessionId = pathParts[2];
+
+    let sessionData = null;
+    let html5QrCode = null;
+    let currentResult = null;
+
+    // DOM Elements
+    const pinView = document.getElementById('pinView');
+    const mainView = document.getElementById('mainView');
+    const pinInputs = document.querySelectorAll('.pin-input');
+    const pinError = document.getElementById('pinError');
+    const errorDiv = document.getElementById('error');
+    const scannerView = document.getElementById('scannerView');
+    const resultView = document.getElementById('resultView');
+
+    // Initialize
+    init();
+
+    async function init() {
+      try {
+        const response = await fetch(`/api/session/${sessionId}`);
+        if (!response.ok) {
+          throw new Error('Session not found');
+        }
+        sessionData = await response.json();
+        setLanguage(sessionData.language);
+
+        // Apply theme
+        if (sessionData.theme && sessionData.theme !== 'default') {
+          document.documentElement.setAttribute('data-theme', sessionData.theme);
+        }
+
+        document.getElementById('eventName').textContent = sessionData.eventName;
+        document.getElementById('sessionId').textContent = `Session: ${sessionId}`;
+        document.title = `${sessionData.eventName} - Verify`;
+
+      } catch (err) {
+        showError(err.message);
+      }
+
+      setupPinInputs();
+      setupButtons();
+    }
+
+    function showView(view) {
+      pinView.classList.remove('active');
+      mainView.classList.remove('active');
+
+      if (view === 'pin') {
+        pinView.classList.add('active');
+      } else {
+        mainView.classList.add('active');
+      }
+    }
+
+    function setupPinInputs() {
+      pinInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          const value = e.target.value.replace(/\D/g, '');
+          e.target.value = value;
+
+          if (value && index < pinInputs.length - 1) {
+            pinInputs[index + 1].focus();
+          }
+
+          const pin = Array.from(pinInputs).map(i => i.value).join('');
+          if (pin.length >= 4) {
+            verifyPin(pin);
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            pinInputs[index - 1].focus();
+          }
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          const digits = paste.replace(/\D/g, '').slice(0, 6);
+          digits.split('').forEach((digit, i) => {
+            if (pinInputs[i]) pinInputs[i].value = digit;
+          });
+          if (digits.length >= 4) verifyPin(digits);
+        });
+      });
+
+      pinInputs[0].focus();
+    }
+
+    async function verifyPin(pin) {
+      try {
+        const response = await fetch(`/api/session/${sessionId}/verify-pin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin })
+        });
+
+        const data = await response.json();
+
+        if (data.valid) {
+          showView('main');
+          startScanner();
+        } else {
+          pinError.textContent = t('error.invalidPin');
+          pinError.classList.remove('hidden');
+          pinInputs.forEach(i => i.value = '');
+          pinInputs[0].focus();
+        }
+      } catch (err) {
+        pinError.textContent = err.message;
+        pinError.classList.remove('hidden');
+      }
+    }
+
+    function setupButtons() {
+      document.getElementById('markClaimedBtn').addEventListener('click', markClaimed);
+      document.getElementById('scanAnotherBtn').addEventListener('click', resetScanner);
+    }
+
+    function startScanner() {
+      html5QrCode = new Html5Qrcode("reader");
+
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1
+      };
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        onScanError
+      ).catch(err => {
+        console.error('Scanner error:', err);
+        showError('Camera access denied or not available');
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(err => console.error('Stop error:', err));
+      }
+    }
+
+    async function onScanSuccess(decodedText) {
+      // Stop scanning
+      stopScanner();
+
+      try {
+        // Parse QR payload
+        const payload = JSON.parse(decodedText);
+
+        if (!payload.s || !payload.sig) {
+          showResult('invalid');
+          return;
+        }
+
+        // Verify with backend
+        const response = await fetch(`/api/session/${sessionId}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: payload.s,
+            batchId: payload.b,
+            ticketId: payload.t !== 'batch' ? payload.t : undefined,
+            sig: payload.sig
+          })
+        });
+
+        const data = await response.json();
+
+        currentResult = data;
+        showResult(data.result, data);
+
+      } catch (err) {
+        console.error('Scan error:', err);
+        showResult('invalid');
+      }
+    }
+
+    function onScanError(error) {
+      // Ignore scan errors (no QR found)
+    }
+
+    function showResult(result, data = {}) {
+      scannerView.classList.add('hidden');
+      resultView.classList.remove('hidden');
+
+      // Hide all result types
+      document.getElementById('validResult').classList.add('hidden');
+      document.getElementById('notWinnerResult').classList.add('hidden');
+      document.getElementById('wrongEventResult').classList.add('hidden');
+      document.getElementById('alreadyClaimedResult').classList.add('hidden');
+      document.getElementById('invalidResult').classList.add('hidden');
+      document.getElementById('markClaimedBtn').classList.add('hidden');
+
+      switch (result) {
+        case 'valid':
+          document.getElementById('validResult').classList.remove('hidden');
+          document.getElementById('validTicketId').textContent = data.ticketId;
+          document.getElementById('markClaimedBtn').classList.remove('hidden');
+          break;
+        case 'notWinner':
+          document.getElementById('notWinnerResult').classList.remove('hidden');
+          break;
+        case 'wrongEvent':
+          document.getElementById('wrongEventResult').classList.remove('hidden');
+          break;
+        case 'alreadyClaimed':
+          document.getElementById('alreadyClaimedResult').classList.remove('hidden');
+          break;
+        default:
+          document.getElementById('invalidResult').classList.remove('hidden');
+      }
+    }
+
+    async function markClaimed() {
+      if (!currentResult || !currentResult.ticketId) return;
+
+      const btn = document.getElementById('markClaimedBtn');
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`/api/session/${sessionId}/mark-claimed`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticketId: currentResult.ticketId })
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to mark claimed');
+        }
+
+        // Show success and reset
+        btn.textContent = 'Claimed!';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-secondary');
+
+        setTimeout(resetScanner, 1500);
+
+      } catch (err) {
+        showError(err.message);
+        btn.disabled = false;
+      }
+    }
+
+    function resetScanner() {
+      currentResult = null;
+      scannerView.classList.remove('hidden');
+      resultView.classList.add('hidden');
+
+      // Reset button
+      const btn = document.getElementById('markClaimedBtn');
+      btn.disabled = false;
+      btn.classList.add('btn-success');
+      btn.classList.remove('btn-secondary');
+      btn.innerHTML = `<span data-i18n="scan.markClaimed">Mark as Claimed</span>`;
+      setLanguage(getLanguage()); // Re-apply translations
+
+      startScanner();
+    }
+
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.classList.remove('hidden');
+      setTimeout(() => {
+        errorDiv.classList.add('hidden');
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

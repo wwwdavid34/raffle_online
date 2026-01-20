@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Raffle - Draw</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="projector-mode">
+  <div id="app">
+    <!-- PIN Entry View -->
+    <div id="pinView" class="view active">
+      <h1 data-i18n="handout.enterPin">Enter Host PIN</h1>
+      <div id="pinError" class="error-message hidden"></div>
+
+      <div class="card" style="max-width: 400px; margin: 0 auto;">
+        <div class="pin-input-container">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="0">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="1">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="2">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="3">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="4">
+          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="5">
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Draw View -->
+    <div id="mainView" class="view">
+      <div class="session-header">
+        <div class="session-event-name" id="eventName" style="font-size: 2rem;"></div>
+      </div>
+
+      <div id="error" class="error-message hidden"></div>
+
+      <!-- Open State - Registration in progress -->
+      <div id="openState" class="card hidden">
+        <h2 class="text-center" data-i18n="draw.registrationOpen">Registration is open</h2>
+
+        <div class="stats-grid mt-3">
+          <div class="stat-card">
+            <div class="stat-value" id="openTotalTickets">0</div>
+            <div class="stat-label" data-i18n="draw.ticketCount">Total Tickets</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="openAvailableTickets">0</div>
+            <div class="stat-label" data-i18n="draw.availableTickets">Available</div>
+          </div>
+        </div>
+
+        <button type="button" id="lockBtn" class="btn btn-warning mt-3">
+          <span data-i18n="draw.lockRegistration">Lock Registration</span>
+        </button>
+      </div>
+
+      <!-- Locked State - Ready to draw -->
+      <div id="lockedState" class="card hidden">
+        <h2 class="text-center" data-i18n="draw.waitingToDraw">Ready to draw</h2>
+
+        <div class="stats-grid mt-3">
+          <div class="stat-card">
+            <div class="stat-value" id="lockedTotalTickets">0</div>
+            <div class="stat-label" data-i18n="draw.ticketCount">Total Tickets</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="lockedAvailableTickets">0</div>
+            <div class="stat-label" data-i18n="draw.availableTickets">Available</div>
+          </div>
+        </div>
+
+        <button type="button" id="drawBtn" class="btn btn-success mt-3" style="font-size: 1.5rem; padding: 1.5rem;">
+          <span data-i18n="draw.startDraw">Draw Winner</span>
+        </button>
+
+        <button type="button" id="closeSessionBtn" class="btn btn-secondary mt-2">
+          <span data-i18n="draw.closeSession">End Raffle</span>
+        </button>
+      </div>
+
+      <!-- Drawing Animation -->
+      <div id="drawingState" class="card hidden">
+        <div class="drawing-container">
+          <div class="drawing-animation" id="drawingAnimation">????</div>
+          <p class="drawing-text" data-i18n="session.state.drawing">Drawing...</p>
+        </div>
+      </div>
+      <div id="drumRollOverlay" class="drum-roll-overlay hidden"></div>
+
+      <!-- Confetti Container -->
+      <div id="confettiContainer" class="confetti-container"></div>
+
+      <!-- Winner Display -->
+      <div id="winnerState" class="card hidden">
+        <div class="winner-display" id="winnerDisplay">
+          <div class="winner-title" data-i18n="draw.winner">WINNER</div>
+          <div class="winner-batch">
+            <span data-i18n="draw.batch">Batch</span> <span id="winnerBatchId"></span>
+          </div>
+          <div class="winner-ticket" id="winnerTicketId"></div>
+          <div class="winner-label" id="winnerLabel"></div>
+        </div>
+
+        <div class="text-center mt-2">
+          <p class="text-large" data-i18n="draw.claimNow">Please come forward to claim your prize!</p>
+        </div>
+
+        <div class="countdown mt-3" id="countdown">60</div>
+        <p class="text-center text-secondary" data-i18n="draw.timeRemaining">Time remaining</p>
+
+        <div class="action-grid mt-3">
+          <button type="button" id="redrawBtn" class="btn btn-warning">
+            <span data-i18n="draw.redraw">Redraw</span>
+          </button>
+          <button type="button" id="confirmClaimBtn" class="btn btn-success">
+            <span data-i18n="draw.confirmClaim">Confirm Claim</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Closed State -->
+      <div id="closedState" class="card hidden">
+        <h1 class="text-center" data-i18n="thanks.title">Thank You!</h1>
+        <p class="text-center text-secondary mt-2" data-i18n="thanks.message">
+          Thank you for participating in this raffle.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/i18n.js"></script>
+  <script>
+    // Get session ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const sessionId = pathParts[2];
+
+    let sessionData = null;
+    let pinVerified = false;
+    let countdownInterval = null;
+    let pollInterval = null;
+
+    // DOM Elements
+    const pinView = document.getElementById('pinView');
+    const mainView = document.getElementById('mainView');
+    const pinInputs = document.querySelectorAll('.pin-input');
+    const pinError = document.getElementById('pinError');
+    const errorDiv = document.getElementById('error');
+
+    // State views
+    const openState = document.getElementById('openState');
+    const lockedState = document.getElementById('lockedState');
+    const drawingState = document.getElementById('drawingState');
+    const winnerState = document.getElementById('winnerState');
+    const closedState = document.getElementById('closedState');
+
+    // Initialize
+    init();
+
+    async function init() {
+      try {
+        const response = await fetch(`/api/session/${sessionId}`);
+        if (!response.ok) {
+          throw new Error('Session not found');
+        }
+        sessionData = await response.json();
+        setLanguage(sessionData.language);
+
+        // Apply theme
+        if (sessionData.theme && sessionData.theme !== 'default') {
+          document.documentElement.setAttribute('data-theme', sessionData.theme);
+        }
+
+        document.getElementById('eventName').textContent = sessionData.eventName;
+        document.title = `${sessionData.eventName} - Draw`;
+
+      } catch (err) {
+        showError(err.message);
+      }
+
+      setupPinInputs();
+      setupButtons();
+    }
+
+    function showView(view) {
+      pinView.classList.remove('active');
+      mainView.classList.remove('active');
+
+      if (view === 'pin') {
+        pinView.classList.add('active');
+      } else {
+        mainView.classList.add('active');
+      }
+    }
+
+    function showState(state) {
+      openState.classList.add('hidden');
+      lockedState.classList.add('hidden');
+      drawingState.classList.add('hidden');
+      winnerState.classList.add('hidden');
+      closedState.classList.add('hidden');
+
+      switch (state) {
+        case 'OPEN':
+          openState.classList.remove('hidden');
+          break;
+        case 'LOCKED':
+          lockedState.classList.remove('hidden');
+          break;
+        case 'DRAWING':
+          if (sessionData.currentWinner) {
+            showWinner(sessionData.currentWinner);
+          } else {
+            drawingState.classList.remove('hidden');
+          }
+          break;
+        case 'CLOSED':
+          closedState.classList.remove('hidden');
+          break;
+      }
+    }
+
+    function setupPinInputs() {
+      pinInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          const value = e.target.value.replace(/\D/g, '');
+          e.target.value = value;
+
+          if (value && index < pinInputs.length - 1) {
+            pinInputs[index + 1].focus();
+          }
+
+          const pin = Array.from(pinInputs).map(i => i.value).join('');
+          if (pin.length >= 4) {
+            verifyPin(pin);
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            pinInputs[index - 1].focus();
+          }
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          const digits = paste.replace(/\D/g, '').slice(0, 6);
+          digits.split('').forEach((digit, i) => {
+            if (pinInputs[i]) pinInputs[i].value = digit;
+          });
+          if (digits.length >= 4) verifyPin(digits);
+        });
+      });
+
+      pinInputs[0].focus();
+    }
+
+    async function verifyPin(pin) {
+      try {
+        const response = await fetch(`/api/session/${sessionId}/verify-pin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin })
+        });
+
+        const data = await response.json();
+
+        if (data.valid) {
+          pinVerified = true;
+          showView('main');
+          updateState();
+          startPolling();
+        } else {
+          pinError.textContent = t('error.invalidPin');
+          pinError.classList.remove('hidden');
+          pinInputs.forEach(i => i.value = '');
+          pinInputs[0].focus();
+        }
+      } catch (err) {
+        pinError.textContent = err.message;
+        pinError.classList.remove('hidden');
+      }
+    }
+
+    function setupButtons() {
+      document.getElementById('lockBtn').addEventListener('click', lockRegistration);
+      document.getElementById('drawBtn').addEventListener('click', drawWinner);
+      document.getElementById('redrawBtn').addEventListener('click', redraw);
+      document.getElementById('confirmClaimBtn').addEventListener('click', confirmClaim);
+      document.getElementById('closeSessionBtn').addEventListener('click', closeSession);
+    }
+
+    function updateStats() {
+      // Update open state stats
+      document.getElementById('openTotalTickets').textContent = sessionData.ticketCount || 0;
+      document.getElementById('openAvailableTickets').textContent = sessionData.availableTickets || 0;
+
+      // Update locked state stats
+      document.getElementById('lockedTotalTickets').textContent = sessionData.ticketCount || 0;
+      document.getElementById('lockedAvailableTickets').textContent = sessionData.availableTickets || 0;
+
+      // Disable draw if no tickets
+      document.getElementById('drawBtn').disabled = (sessionData.availableTickets || 0) === 0;
+    }
+
+    function updateState() {
+      updateStats();
+      showState(sessionData.state);
+    }
+
+    function startPolling() {
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/session/${sessionId}`);
+          if (!response.ok) return;
+
+          sessionData = await response.json();
+          updateState();
+        } catch (err) {
+          console.error('Poll error:', err);
+        }
+      }, 2000);
+    }
+
+    async function lockRegistration() {
+      const btn = document.getElementById('lockBtn');
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`/api/session/${sessionId}/lock`, {
+          method: 'POST'
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to lock');
+        }
+
+        sessionData.state = 'LOCKED';
+        updateState();
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function drawWinner() {
+      const btn = document.getElementById('drawBtn');
+      btn.disabled = true;
+
+      // Show drawing animation with drum roll
+      showState('DRAWING');
+      document.getElementById('drumRollOverlay').classList.remove('hidden');
+
+      let winnerData = null;
+
+      try {
+        // Start the animation immediately
+        playDrawingAnimation();
+
+        // Fetch winner in parallel
+        const response = await fetch(`/api/session/${sessionId}/draw`, {
+          method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to draw');
+        }
+
+        winnerData = data;
+
+        // Continue animation for dramatic effect (total ~4 seconds)
+        // Phase 1: Fast spinning (already running for ~1s by now)
+        await sleep(1500);
+
+        // Phase 2: Slow down
+        slowDownAnimation(winnerData.ticketId);
+        await sleep(1500);
+
+        // Phase 3: Final reveal
+        stopDrawingAnimation();
+        document.getElementById('drumRollOverlay').classList.add('hidden');
+        showWinner(winnerData);
+        launchConfetti();
+
+      } catch (err) {
+        stopDrawingAnimation();
+        document.getElementById('drumRollOverlay').classList.add('hidden');
+        showState('LOCKED');
+        showError(err.message);
+        btn.disabled = false;
+      }
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function playDrawingAnimation() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const animEl = document.getElementById('drawingAnimation');
+      animEl.classList.remove('slowing', 'stopping');
+
+      let speed = 50;
+      function tick() {
+        let rand = '';
+        for (let i = 0; i < 4; i++) {
+          rand += chars[Math.floor(Math.random() * chars.length)];
+        }
+        animEl.textContent = rand;
+        drawingState.dataset.timeout = setTimeout(tick, speed);
+      }
+      tick();
+    }
+
+    function slowDownAnimation(finalTicketId) {
+      const animEl = document.getElementById('drawingAnimation');
+      animEl.classList.add('slowing');
+
+      // Clear existing animation
+      if (drawingState.dataset.timeout) {
+        clearTimeout(parseInt(drawingState.dataset.timeout));
+      }
+
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const batchId = finalTicketId.split('-')[0];
+      let speed = 100;
+      let iteration = 0;
+      const maxIterations = 15;
+
+      function slowTick() {
+        iteration++;
+        speed += 30; // Gradually slow down
+
+        let rand = '';
+        // As we get closer to the end, lock in more characters
+        const lockChars = Math.floor((iteration / maxIterations) * 4);
+        for (let i = 0; i < 4; i++) {
+          if (i < lockChars) {
+            rand += batchId[i] || chars[Math.floor(Math.random() * chars.length)];
+          } else {
+            rand += chars[Math.floor(Math.random() * chars.length)];
+          }
+        }
+        animEl.textContent = rand;
+
+        if (iteration < maxIterations) {
+          drawingState.dataset.timeout = setTimeout(slowTick, speed);
+        } else {
+          animEl.classList.add('stopping');
+          animEl.textContent = batchId;
+        }
+      }
+      slowTick();
+    }
+
+    function stopDrawingAnimation() {
+      const timeout = drawingState.dataset.timeout;
+      if (timeout) clearTimeout(parseInt(timeout));
+      const animEl = document.getElementById('drawingAnimation');
+      animEl.classList.remove('slowing', 'stopping');
+    }
+
+    function launchConfetti() {
+      const container = document.getElementById('confettiContainer');
+      const colors = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f', '#ff6b35', '#ffd700'];
+
+      // Create confetti pieces
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 0.5 + 's';
+        confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+        container.appendChild(confetti);
+
+        // Trigger animation
+        setTimeout(() => confetti.classList.add('active'), 10);
+
+        // Clean up after animation
+        setTimeout(() => confetti.remove(), 4000);
+      }
+    }
+
+    function showWinner(winner) {
+      sessionData.currentWinner = winner;
+      winnerState.classList.remove('hidden');
+      drawingState.classList.add('hidden');
+      lockedState.classList.add('hidden');
+
+      // Parse ticket ID
+      const parts = winner.ticketId.split('-');
+      document.getElementById('winnerBatchId').textContent = parts[0];
+      document.getElementById('winnerTicketId').textContent = winner.ticketId;
+      document.getElementById('winnerLabel').textContent = winner.batchLabel || '';
+
+      // Add reveal animation
+      const winnerDisplay = document.getElementById('winnerDisplay');
+      winnerDisplay.classList.add('winner-reveal', 'revealed');
+      setTimeout(() => winnerDisplay.classList.remove('winner-reveal'), 600);
+
+      // Start countdown
+      startCountdown(winner.claimDeadline);
+    }
+
+    function startCountdown(deadline) {
+      const countdownEl = document.getElementById('countdown');
+
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      countdownInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        countdownEl.textContent = remaining;
+
+        if (remaining <= 10) {
+          countdownEl.classList.add('urgent');
+        } else {
+          countdownEl.classList.remove('urgent');
+        }
+
+        if (remaining === 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+    }
+
+    async function redraw() {
+      const btn = document.getElementById('redrawBtn');
+      btn.disabled = true;
+
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      try {
+        const response = await fetch(`/api/session/${sessionId}/redraw`, {
+          method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to redraw');
+        }
+
+        showWinner(data);
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function confirmClaim() {
+      const btn = document.getElementById('confirmClaimBtn');
+      btn.disabled = true;
+
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      try {
+        const response = await fetch(`/api/session/${sessionId}/confirm-claim`, {
+          method: 'POST'
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to confirm');
+        }
+
+        // Refresh session data
+        const statusResponse = await fetch(`/api/session/${sessionId}`);
+        sessionData = await statusResponse.json();
+
+        sessionData.currentWinner = null;
+        updateState();
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function closeSession() {
+      if (!confirm('Are you sure you want to end this raffle?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/session/${sessionId}/close`, {
+          method: 'POST'
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to close');
+        }
+
+        sessionData.state = 'CLOSED';
+        if (pollInterval) clearInterval(pollInterval);
+        updateState();
+
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.classList.remove('hidden');
+      setTimeout(() => {
+        errorDiv.classList.add('hidden');
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
