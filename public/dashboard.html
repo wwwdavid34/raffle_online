@@ -257,24 +257,37 @@
 </head>
 <body>
   <div id="app">
-    <!-- PIN Entry View -->
-    <div id="pinView" class="view active">
+    <!-- Session Code Entry View (when no session ID in URL) -->
+    <div id="codeView" class="view active">
       <div class="card">
         <h1 class="text-center" data-i18n="dashboard.title">Event Dashboard</h1>
-        <p class="text-center text-secondary" data-i18n="dashboard.enterPin">Enter the session PIN to view dashboard</p>
+        <p class="text-center text-secondary" data-i18n="handout.enterPin">Enter Session Code</p>
+        <div id="codeError" class="error-message hidden"></div>
 
         <div class="pin-input-container">
-          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="0" autocomplete="off">
-          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="1" autocomplete="off">
-          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="2" autocomplete="off">
-          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="3" autocomplete="off">
-          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="4" autocomplete="off">
-          <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="5" autocomplete="off">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="0">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="1">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="2">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="3">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="4">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="5">
         </div>
+      </div>
+    </div>
 
-        <div id="pinError" class="error-message hidden" data-i18n="common.invalidPin">Invalid PIN</div>
+    <!-- Passcode Entry View (when session requires authentication) -->
+    <div id="passcodeView" class="view">
+      <div class="card">
+        <h1 class="text-center" data-i18n="control.enterPasscode">Enter Passcode</h1>
+        <div id="passcodeError" class="error-message hidden"></div>
 
-        <button type="button" id="verifyPinBtn" class="btn btn-primary btn-block mt-2" data-i18n="common.continue">Continue</button>
+        <p class="text-center text-secondary mb-2" data-i18n="control.passcodeRequired">This session requires a passcode</p>
+        <div class="pin-input-container">
+          <input type="text" class="pin-input passcode-input" maxlength="1" inputmode="numeric" data-index="0">
+          <input type="text" class="pin-input passcode-input" maxlength="1" inputmode="numeric" data-index="1">
+          <input type="text" class="pin-input passcode-input" maxlength="1" inputmode="numeric" data-index="2">
+          <input type="text" class="pin-input passcode-input" maxlength="1" inputmode="numeric" data-index="3">
+        </div>
       </div>
     </div>
 
@@ -413,45 +426,69 @@
       currentSessionId = pathParts[2];
     }
 
+    let sessionData = null;
     let dashboardData = null;
     let pollInterval = null;
+    let storedPasscode = null;
 
     // DOM elements
-    const pinView = document.getElementById('pinView');
+    const codeView = document.getElementById('codeView');
+    const passcodeView = document.getElementById('passcodeView');
     const dashboardView = document.getElementById('dashboardView');
     const errorView = document.getElementById('errorView');
-    const pinInputs = document.querySelectorAll('.pin-input');
+    const codeInputs = document.querySelectorAll('.code-input');
+    const passcodeInputs = document.querySelectorAll('.passcode-input');
+    const codeError = document.getElementById('codeError');
+    const passcodeError = document.getElementById('passcodeError');
 
     init();
 
-    function init() {
-      setupPinInputs();
-      document.getElementById('verifyPinBtn').addEventListener('click', verifyPin);
-
+    async function init() {
       if (currentSessionId) {
-        // Session ID in URL - try to load directly
-        loadDashboard();
+        try {
+          const response = await fetch(`/api/session/${currentSessionId}`);
+          if (!response.ok) throw new Error('Session not found');
+
+          sessionData = await response.json();
+          setLanguage(sessionData.language);
+
+          if (sessionData.theme && sessionData.theme !== 'default') {
+            document.documentElement.setAttribute('data-theme', sessionData.theme);
+          }
+
+          if (sessionData.hasPasscode) {
+            showView('passcode');
+            setupPasscodeInputs();
+          } else {
+            await loadDashboard();
+          }
+        } catch (err) {
+          document.getElementById('errorMessage').textContent = err.message;
+          showView('error');
+        }
       } else {
-        showView('pin');
-        pinInputs[0].focus();
+        showView('code');
+        setupCodeInputs();
       }
     }
 
-    function setupPinInputs() {
-      pinInputs.forEach((input, index) => {
+    function setupCodeInputs() {
+      codeInputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
-          const value = e.target.value;
-          if (value && index < 5) {
-            pinInputs[index + 1].focus();
+          const value = e.target.value.replace(/\D/g, '');
+          e.target.value = value;
+
+          if (value && index < codeInputs.length - 1) {
+            codeInputs[index + 1].focus();
           }
-          if (index === 5 && value) {
-            verifyPin();
-          }
+
+          const code = Array.from(codeInputs).map(i => i.value).join('');
+          if (code.length === 6) verifySessionCode(code);
         });
 
         input.addEventListener('keydown', (e) => {
           if (e.key === 'Backspace' && !e.target.value && index > 0) {
-            pinInputs[index - 1].focus();
+            codeInputs[index - 1].focus();
           }
         });
 
@@ -459,48 +496,87 @@
           e.preventDefault();
           const paste = (e.clipboardData || window.clipboardData).getData('text');
           const digits = paste.replace(/\D/g, '').slice(0, 6);
-          digits.split('').forEach((d, i) => {
-            if (pinInputs[i]) pinInputs[i].value = d;
+          digits.split('').forEach((digit, i) => {
+            if (codeInputs[i]) codeInputs[i].value = digit;
           });
-          if (digits.length === 6) verifyPin();
+          if (digits.length === 6) verifySessionCode(digits);
         });
       });
+
+      codeInputs[0].focus();
     }
 
-    function getPin() {
-      return Array.from(pinInputs).map(i => i.value).join('');
-    }
-
-    async function verifyPin() {
-      const pin = getPin();
-      if (pin.length !== 6) return;
-
-      const btn = document.getElementById('verifyPinBtn');
-      btn.disabled = true;
-      document.getElementById('pinError').classList.add('hidden');
-
+    async function verifySessionCode(code) {
       try {
-        // First check if session exists
-        const statusResponse = await fetch(`/api/session/${pin}`);
-        if (!statusResponse.ok) {
-          throw new Error('Session not found');
-        }
-
-        // PIN is the session ID itself
-        currentSessionId = pin;
-
-        // Update URL
-        history.replaceState(null, '', `/s/${currentSessionId}/dashboard`);
-
-        // Load dashboard
-        await loadDashboard();
-
+        const checkResponse = await fetch(`/api/session/${code}`);
+        if (!checkResponse.ok) throw new Error(t('error.sessionNotFound'));
+        window.location.href = `/s/${code}/dashboard`;
       } catch (err) {
-        document.getElementById('pinError').classList.remove('hidden');
-        pinInputs.forEach(i => i.value = '');
-        pinInputs[0].focus();
-      } finally {
-        btn.disabled = false;
+        codeError.textContent = err.message;
+        codeError.classList.remove('hidden');
+        codeInputs.forEach(i => i.value = '');
+        codeInputs[0].focus();
+      }
+    }
+
+    function setupPasscodeInputs() {
+      passcodeInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          const value = e.target.value.replace(/\D/g, '');
+          e.target.value = value;
+
+          if (value && index < passcodeInputs.length - 1) {
+            passcodeInputs[index + 1].focus();
+          }
+
+          const passcode = Array.from(passcodeInputs).map(i => i.value).join('');
+          if (passcode.length === 4) verifyPasscode(passcode);
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            passcodeInputs[index - 1].focus();
+          }
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          const digits = paste.replace(/\D/g, '').slice(0, 4);
+          digits.split('').forEach((digit, i) => {
+            if (passcodeInputs[i]) passcodeInputs[i].value = digit;
+          });
+          if (digits.length === 4) verifyPasscode(digits);
+        });
+      });
+
+      passcodeInputs[0].focus();
+    }
+
+    async function verifyPasscode(passcode) {
+      try {
+        const response = await fetch(`/api/session/${currentSessionId}/verify-passcode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode })
+        });
+
+        const data = await response.json();
+
+        if (data.valid) {
+          storedPasscode = passcode;
+          await loadDashboard();
+        } else {
+          passcodeError.textContent = t('error.invalidPasscode');
+          passcodeError.classList.remove('hidden');
+          passcodeInputs.forEach(i => i.value = '');
+          passcodeInputs[0].focus();
+        }
+      } catch (err) {
+        passcodeError.textContent = err.message;
+        passcodeError.classList.remove('hidden');
+        passcodeInputs.forEach(i => i.value = '');
+        passcodeInputs[0].focus();
       }
     }
 
@@ -737,13 +813,17 @@
     }
 
     function showView(view) {
-      pinView.classList.remove('active');
+      codeView.classList.remove('active');
+      passcodeView.classList.remove('active');
       dashboardView.classList.remove('active');
       errorView.classList.remove('active');
 
       switch (view) {
-        case 'pin':
-          pinView.classList.add('active');
+        case 'code':
+          codeView.classList.add('active');
+          break;
+        case 'passcode':
+          passcodeView.classList.add('active');
           break;
         case 'dashboard':
           dashboardView.classList.add('active');

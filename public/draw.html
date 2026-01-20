@@ -9,31 +9,121 @@
     html, body {
       height: 100%;
       margin: 0;
+      overflow: hidden;
     }
     body.projector-mode {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100vh;
+      width: 100vw;
     }
     body.projector-mode #app {
       flex: 1;
       display: flex;
       flex-direction: column;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
     }
     body.projector-mode .view.active {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center;
+      height: 100%;
+      width: 100%;
+      padding: 1rem;
+      box-sizing: border-box;
     }
     body.projector-mode .card {
       margin: 0 auto;
       width: 100%;
-      max-width: 600px;
+      max-width: min(90vw, 800px);
+      max-height: 90vh;
+      overflow: auto;
     }
     body.projector-mode .session-header {
-      padding: 1rem;
+      padding: clamp(0.5rem, 2vh, 2rem);
       text-align: center;
+      flex-shrink: 0;
+      width: 100%;
+    }
+    body.projector-mode .session-event-name {
+      font-size: clamp(1.5rem, 4vw, 3rem) !important;
+      width: 100%;
+    }
+    /* Winner state - full screen reactive */
+    body.projector-mode #winnerState {
+      max-width: 95vw;
+      max-height: 95vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-bottom: clamp(1.5rem, 4vh, 3rem);
+    }
+    body.projector-mode #winnerState .winner-actions {
+      margin-bottom: clamp(0.5rem, 2vh, 1.5rem);
+    }
+    body.projector-mode #winnerState .winner-display {
+      padding: clamp(1rem, 4vh, 3rem);
+    }
+    body.projector-mode #winnerState .winner-title {
+      font-size: clamp(2rem, 6vw, 5rem);
+    }
+    body.projector-mode #winnerState .winner-ticket {
+      font-size: clamp(3rem, 10vw, 8rem);
+    }
+    body.projector-mode #winnerState .winner-batch {
+      font-size: clamp(1rem, 2.5vw, 2rem);
+    }
+    body.projector-mode #winnerState .winner-label {
+      font-size: clamp(1.25rem, 3vw, 2.5rem);
+    }
+    body.projector-mode #winnerState .countdown {
+      font-size: clamp(3rem, 8vw, 6rem);
+    }
+    body.projector-mode #winnerState .text-large {
+      font-size: clamp(1rem, 2.5vw, 2rem);
+    }
+    /* Stats grid reactive */
+    body.projector-mode .stats-grid {
+      gap: clamp(0.5rem, 2vw, 1.5rem);
+    }
+    body.projector-mode .stat-value {
+      font-size: clamp(2rem, 6vw, 4rem);
+    }
+    body.projector-mode .stat-label {
+      font-size: clamp(0.75rem, 1.5vw, 1.25rem);
+    }
+    /* Buttons reactive */
+    body.projector-mode .btn {
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      padding: clamp(0.75rem, 2vh, 1.5rem) clamp(1rem, 3vw, 2rem);
+    }
+    body.projector-mode #drawBtn {
+      font-size: clamp(1.5rem, 3vw, 2.5rem) !important;
+      padding: clamp(1rem, 3vh, 2rem) clamp(1.5rem, 4vw, 3rem) !important;
+    }
+    /* Drawing animation reactive */
+    body.projector-mode .drawing-animation {
+      font-size: clamp(4rem, 12vw, 10rem);
+    }
+    body.projector-mode .drawing-text {
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+    }
+    /* Main view layout */
+    body.projector-mode #mainView {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+    body.projector-mode #mainView > .card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .winner-actions {
       transition: opacity 0.3s ease-out;
@@ -46,19 +136,35 @@
 </head>
 <body class="projector-mode">
   <div id="app">
-    <!-- PIN Entry View -->
-    <div id="pinView" class="view active">
+    <!-- Session Code Entry View (when no session ID in URL) -->
+    <div id="codeView" class="view active">
       <h1 data-i18n="handout.enterPin">Enter Session Code</h1>
-      <div id="pinError" class="error-message hidden"></div>
+      <div id="codeError" class="error-message hidden"></div>
 
       <div class="card" style="max-width: 400px; margin: 0 auto;">
-        <div class="pin-input-container">
-          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="0">
-          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="1">
-          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="2">
-          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="3">
-          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="4">
-          <input type="text" class="pin-input" maxlength="1" inputmode="numeric" data-index="5">
+        <div class="pin-input-container" id="codeInputSection">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="0">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="1">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="2">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="3">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="4">
+          <input type="text" class="pin-input code-input" maxlength="1" inputmode="numeric" data-index="5">
+        </div>
+      </div>
+    </div>
+
+    <!-- Passcode Entry View (when session requires authentication) -->
+    <div id="passcodeView" class="view">
+      <h1 data-i18n="control.enterPasscode">Enter Passcode</h1>
+      <div id="passcodeError" class="error-message hidden"></div>
+
+      <div class="card" style="max-width: 400px; margin: 0 auto;">
+        <p class="text-center text-secondary mb-2" data-i18n="control.passcodeRequired">This session requires a passcode</p>
+        <div class="pin-input-container" id="passcodeInputSection">
+          <input type="text" class="pin-input passcode-input" maxlength="1" inputmode="numeric" data-index="0">
+          <input type="text" class="pin-input passcode-input" maxlength="1" inputmode="numeric" data-index="1">
+          <input type="text" class="pin-input passcode-input" maxlength="1" inputmode="numeric" data-index="2">
+          <input type="text" class="pin-input passcode-input" maxlength="1" inputmode="numeric" data-index="3">
         </div>
       </div>
     </div>
@@ -182,16 +288,19 @@
     }
 
     let sessionData = null;
-    let pinVerified = false;
     let countdownInterval = null;
     let pollInterval = null;
-    let actionsIdleTimer = null;
+    let currentWinnerTicketId = null;
+    let storedPasscode = null;
 
     // DOM Elements
-    const pinView = document.getElementById('pinView');
+    const codeView = document.getElementById('codeView');
+    const passcodeView = document.getElementById('passcodeView');
     const mainView = document.getElementById('mainView');
-    const pinInputs = document.querySelectorAll('.pin-input');
-    const pinError = document.getElementById('pinError');
+    const codeInputs = document.querySelectorAll('.code-input');
+    const passcodeInputs = document.querySelectorAll('.passcode-input');
+    const codeError = document.getElementById('codeError');
+    const passcodeError = document.getElementById('passcodeError');
     const errorDiv = document.getElementById('error');
 
     // State views
@@ -205,8 +314,8 @@
     init();
 
     async function init() {
-      // If we have a session ID in URL, load that session and skip PIN entry
       if (currentSessionId) {
+        // Session ID in URL - load session and check if passcode required
         try {
           const response = await fetch(`/api/session/${currentSessionId}`);
           if (!response.ok) {
@@ -223,29 +332,43 @@
           document.getElementById('eventName').textContent = sessionData.eventName;
           document.title = `${sessionData.eventName} - Draw`;
 
-          // Session ID in URL means we're already authenticated - skip PIN entry
-          pinVerified = true;
-          showView('main');
-          updateState();
-          startPolling();
-
+          // Check if passcode is required
+          if (sessionData.hasPasscode) {
+            showView('passcode');
+            setupPasscodeInputs();
+          } else {
+            // No passcode required - go directly to main view
+            showView('main');
+            updateState();
+            startPolling();
+          }
         } catch (err) {
           showError(err.message);
         }
+      } else {
+        // No session ID - show code entry
+        showView('code');
+        setupCodeInputs();
       }
 
-      setupPinInputs();
       setupButtons();
     }
 
     function showView(view) {
-      pinView.classList.remove('active');
+      codeView.classList.remove('active');
+      passcodeView.classList.remove('active');
       mainView.classList.remove('active');
 
-      if (view === 'pin') {
-        pinView.classList.add('active');
-      } else {
-        mainView.classList.add('active');
+      switch (view) {
+        case 'code':
+          codeView.classList.add('active');
+          break;
+        case 'passcode':
+          passcodeView.classList.add('active');
+          break;
+        case 'main':
+          mainView.classList.add('active');
+          break;
       }
     }
 
@@ -276,25 +399,25 @@
       }
     }
 
-    function setupPinInputs() {
-      pinInputs.forEach((input, index) => {
+    function setupCodeInputs() {
+      codeInputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
           const value = e.target.value.replace(/\D/g, '');
           e.target.value = value;
 
-          if (value && index < pinInputs.length - 1) {
-            pinInputs[index + 1].focus();
+          if (value && index < codeInputs.length - 1) {
+            codeInputs[index + 1].focus();
           }
 
-          const pin = Array.from(pinInputs).map(i => i.value).join('');
-          if (pin.length === 6) {
-            verifyPin(pin);
+          const code = Array.from(codeInputs).map(i => i.value).join('');
+          if (code.length === 6) {
+            verifySessionCode(code);
           }
         });
 
         input.addEventListener('keydown', (e) => {
           if (e.key === 'Backspace' && !e.target.value && index > 0) {
-            pinInputs[index - 1].focus();
+            codeInputs[index - 1].focus();
           }
         });
 
@@ -303,54 +426,94 @@
           const paste = (e.clipboardData || window.clipboardData).getData('text');
           const digits = paste.replace(/\D/g, '').slice(0, 6);
           digits.split('').forEach((digit, i) => {
-            if (pinInputs[i]) pinInputs[i].value = digit;
+            if (codeInputs[i]) codeInputs[i].value = digit;
           });
-          if (digits.length === 6) verifyPin(digits);
+          if (digits.length === 6) verifySessionCode(digits);
         });
       });
 
-      pinInputs[0].focus();
+      codeInputs[0].focus();
     }
 
-    async function verifyPin(pin) {
+    async function verifySessionCode(code) {
       try {
-        // If no session ID in URL, the PIN is the session ID - redirect to proper URL
-        if (!currentSessionId) {
-          // Verify session exists by checking status
-          const checkResponse = await fetch(`/api/session/${pin}`);
-          if (!checkResponse.ok) {
-            throw new Error('Session not found');
-          }
-          // Session exists, redirect to the proper URL
-          window.location.href = `/s/${pin}/draw`;
-          return;
+        // Verify session exists
+        const checkResponse = await fetch(`/api/session/${code}`);
+        if (!checkResponse.ok) {
+          throw new Error(t('error.sessionNotFound'));
         }
+        // Session exists, redirect to the proper URL
+        window.location.href = `/s/${code}/draw`;
+      } catch (err) {
+        codeError.textContent = err.message;
+        codeError.classList.remove('hidden');
+        codeInputs.forEach(i => i.value = '');
+        codeInputs[0].focus();
+      }
+    }
 
-        // Session ID in URL - verify PIN matches
-        const response = await fetch(`/api/session/${currentSessionId}/verify-pin`, {
+    function setupPasscodeInputs() {
+      passcodeInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          const value = e.target.value.replace(/\D/g, '');
+          e.target.value = value;
+
+          if (value && index < passcodeInputs.length - 1) {
+            passcodeInputs[index + 1].focus();
+          }
+
+          const passcode = Array.from(passcodeInputs).map(i => i.value).join('');
+          if (passcode.length === 4) {
+            verifyPasscode(passcode);
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            passcodeInputs[index - 1].focus();
+          }
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          const digits = paste.replace(/\D/g, '').slice(0, 4);
+          digits.split('').forEach((digit, i) => {
+            if (passcodeInputs[i]) passcodeInputs[i].value = digit;
+          });
+          if (digits.length === 4) verifyPasscode(digits);
+        });
+      });
+
+      passcodeInputs[0].focus();
+    }
+
+    async function verifyPasscode(passcode) {
+      try {
+        const response = await fetch(`/api/session/${currentSessionId}/verify-passcode`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin })
+          body: JSON.stringify({ passcode })
         });
 
         const data = await response.json();
 
         if (data.valid) {
-          pinVerified = true;
+          storedPasscode = passcode;
           showView('main');
           updateState();
           startPolling();
         } else {
-          pinError.textContent = t('error.invalidPin');
-          pinError.classList.remove('hidden');
-          pinInputs.forEach(i => i.value = '');
-          pinInputs[0].focus();
+          passcodeError.textContent = t('error.invalidPasscode');
+          passcodeError.classList.remove('hidden');
+          passcodeInputs.forEach(i => i.value = '');
+          passcodeInputs[0].focus();
         }
       } catch (err) {
-        pinError.textContent = err.message;
-        pinInputs.forEach(i => i.value = '');
-        pinInputs[0].focus();
-        pinError.classList.remove('hidden');
+        passcodeError.textContent = err.message;
+        passcodeError.classList.remove('hidden');
+        passcodeInputs.forEach(i => i.value = '');
+        passcodeInputs[0].focus();
       }
     }
 
@@ -401,7 +564,9 @@
 
       try {
         const response = await fetch(`/api/session/${currentSessionId}/lock`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: storedPasscode })
         });
 
         if (!response.ok) {
@@ -424,7 +589,9 @@
 
       try {
         const response = await fetch(`/api/session/${currentSessionId}/reopen`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: storedPasscode })
         });
 
         if (!response.ok) {
@@ -457,7 +624,9 @@
 
         // Fetch winner in parallel
         const response = await fetch(`/api/session/${currentSessionId}/draw`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: storedPasscode })
         });
 
         const data = await response.json();
@@ -583,6 +752,8 @@
     }
 
     function showWinner(winner) {
+      const isNewWinner = currentWinnerTicketId !== winner.ticketId;
+
       sessionData.currentWinner = winner;
       winnerState.classList.remove('hidden');
       drawingState.classList.add('hidden');
@@ -594,16 +765,21 @@
       document.getElementById('winnerTicketId').textContent = winner.ticketId;
       document.getElementById('winnerLabel').textContent = winner.batchLabel || '';
 
-      // Add reveal animation
-      const winnerDisplay = document.getElementById('winnerDisplay');
-      winnerDisplay.classList.add('winner-reveal', 'revealed');
-      setTimeout(() => winnerDisplay.classList.remove('winner-reveal'), 600);
+      // Only do animations for new winners
+      if (isNewWinner) {
+        currentWinnerTicketId = winner.ticketId;
 
-      // Start countdown
+        // Add reveal animation
+        const winnerDisplay = document.getElementById('winnerDisplay');
+        winnerDisplay.classList.add('winner-reveal', 'revealed');
+        setTimeout(() => winnerDisplay.classList.remove('winner-reveal'), 600);
+
+        // Start inactivity monitor for auto-hiding buttons
+        startInactivityMonitor();
+      }
+
+      // Always update countdown
       startCountdown(winner.claimDeadline);
-
-      // Start auto-hide timer for action buttons
-      startActionsIdleTimer();
     }
 
     function startCountdown(deadline) {
@@ -635,7 +811,9 @@
 
       try {
         const response = await fetch(`/api/session/${currentSessionId}/redraw`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: storedPasscode })
         });
 
         const data = await response.json();
@@ -660,7 +838,9 @@
 
       try {
         const response = await fetch(`/api/session/${currentSessionId}/confirm-claim`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: storedPasscode })
         });
 
         if (!response.ok) {
@@ -689,7 +869,9 @@
 
       try {
         const response = await fetch(`/api/session/${currentSessionId}/close`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: storedPasscode })
         });
 
         if (!response.ok) {
@@ -715,34 +897,56 @@
     }
 
     // Auto-hide winner action buttons after 5 seconds of inactivity
-    function startActionsIdleTimer() {
+    // This runs independently of polling
+    let lastActivityTime = Date.now();
+    let inactivityCheckInterval = null;
+
+    function startInactivityMonitor() {
+      if (inactivityCheckInterval) return; // Already running
+
+      lastActivityTime = Date.now();
       const actionsEl = document.getElementById('winnerActions');
-
-      // Clear existing timer
-      if (actionsIdleTimer) {
-        clearTimeout(actionsIdleTimer);
-      }
-
-      // Show buttons
       actionsEl.classList.remove('auto-hidden');
 
-      // Set timer to hide after 5 seconds
-      actionsIdleTimer = setTimeout(() => {
-        if (!winnerState.classList.contains('hidden')) {
+      // Check every 500ms if 5 seconds of inactivity has passed
+      inactivityCheckInterval = setInterval(() => {
+        if (winnerState.classList.contains('hidden')) {
+          stopInactivityMonitor();
+          return;
+        }
+
+        const elapsed = Date.now() - lastActivityTime;
+        if (elapsed >= 5000) {
           actionsEl.classList.add('auto-hidden');
         }
-      }, 5000);
+      }, 500);
     }
 
-    function resetActionsIdleTimer() {
-      if (actionsIdleTimer && !winnerState.classList.contains('hidden')) {
-        startActionsIdleTimer();
+    function stopInactivityMonitor() {
+      if (inactivityCheckInterval) {
+        clearInterval(inactivityCheckInterval);
+        inactivityCheckInterval = null;
       }
     }
 
-    // Listen for user activity to show buttons
+    function onUserActivity() {
+      lastActivityTime = Date.now();
+
+      // If winner state is visible, show the buttons
+      if (!winnerState.classList.contains('hidden')) {
+        const actionsEl = document.getElementById('winnerActions');
+        actionsEl.classList.remove('auto-hidden');
+
+        // Start monitor if not already running
+        if (!inactivityCheckInterval) {
+          startInactivityMonitor();
+        }
+      }
+    }
+
+    // Listen for user activity
     ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(event => {
-      document.addEventListener(event, resetActionsIdleTimer);
+      document.addEventListener(event, onUserActivity);
     });
   </script>
 </body>

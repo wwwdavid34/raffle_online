@@ -90,10 +90,88 @@ const translations = {
     'zh-TW': '節慶',
     'ja': '季節・イベント'
   },
-  'session.create.pin': {
-    'en': 'Host PIN (6 digits)',
-    'zh-TW': '主持人 PIN (6 位數字)',
-    'ja': 'ホストPIN (6桁)'
+
+  // Theme names
+  'theme.default': {
+    'en': 'Default',
+    'zh-TW': '預設',
+    'ja': 'デフォルト'
+  },
+  'theme.ocean': {
+    'en': 'Ocean',
+    'zh-TW': '海洋',
+    'ja': 'オーシャン'
+  },
+  'theme.sunset': {
+    'en': 'Sunset',
+    'zh-TW': '夕陽',
+    'ja': 'サンセット'
+  },
+  'theme.forest': {
+    'en': 'Forest',
+    'zh-TW': '森林',
+    'ja': 'フォレスト'
+  },
+  'theme.purple': {
+    'en': 'Purple',
+    'zh-TW': '紫色',
+    'ja': 'パープル'
+  },
+  'theme.gold': {
+    'en': 'Gold',
+    'zh-TW': '金色',
+    'ja': 'ゴールド'
+  },
+  'theme.rose': {
+    'en': 'Rose',
+    'zh-TW': '玫瑰',
+    'ja': 'ローズ'
+  },
+  'theme.light': {
+    'en': 'Light',
+    'zh-TW': '淺色',
+    'ja': 'ライト'
+  },
+  'theme.chineseNewYear': {
+    'en': 'Chinese New Year 🧧',
+    'zh-TW': '農曆新年 🧧',
+    'ja': '旧正月 🧧'
+  },
+  'theme.halloween': {
+    'en': 'Halloween 🎃',
+    'zh-TW': '萬聖節 🎃',
+    'ja': 'ハロウィン 🎃'
+  },
+  'theme.christmas': {
+    'en': 'Christmas 🎄',
+    'zh-TW': '聖誕節 🎄',
+    'ja': 'クリスマス 🎄'
+  },
+  'theme.valentines': {
+    'en': "Valentine's Day 💕",
+    'zh-TW': '情人節 💕',
+    'ja': 'バレンタイン 💕'
+  },
+  'theme.spring': {
+    'en': 'Spring 🌸',
+    'zh-TW': '春天 🌸',
+    'ja': '春 🌸'
+  },
+  'theme.summer': {
+    'en': 'Summer ☀️',
+    'zh-TW': '夏天 ☀️',
+    'ja': '夏 ☀️'
+  },
+
+  'session.create.passcode': {
+    'en': 'Passcode (4 digits, optional)',
+    'zh-TW': '密碼 (4 位數字，選填)',
+    'ja': 'パスコード (4桁、任意)'
+  },
+  'session.create.passcodeHint': {
+    'en': 'Required for host controls if set',
+    'zh-TW': '設定後需輸入才能使用主持人功能',
+    'ja': '設定するとホスト機能に必要'
   },
   'session.create.button': {
     'en': 'Create Raffle',
@@ -130,35 +208,25 @@ const translations = {
     'zh-TW': '未勾選時，他們可再次中獎',
     'ja': 'チェックしない場合、再当選可能'
   },
-  'session.create.passkey': {
-    'en': 'Passkey (optional)',
-    'zh-TW': '密碼 (可選)',
-    'ja': 'パスキー (任意)'
-  },
-  'session.create.passkeyPlaceholder': {
-    'en': 'Extra security code',
-    'zh-TW': '額外安全碼',
-    'ja': '追加セキュリティコード'
-  },
-  'session.create.passkeyHint': {
-    'en': 'Required for host controls if set. Session ID alone won\'t grant access.',
-    'zh-TW': '設定後需輸入才能存取主持人控制功能。僅有活動代碼無法存取。',
-    'ja': '設定するとホスト機能へのアクセスに必要。セッションIDだけではアクセスできません。'
-  },
-  'control.enterPasskey': {
-    'en': 'Enter passkey',
+  'control.enterPasscode': {
+    'en': 'Enter Passcode',
     'zh-TW': '輸入密碼',
-    'ja': 'パスキーを入力'
+    'ja': 'パスコードを入力'
   },
-  'control.passkeyRequired': {
-    'en': 'This session requires a passkey',
+  'control.passcodeRequired': {
+    'en': 'This session requires a passcode',
     'zh-TW': '此活動需要輸入密碼',
-    'ja': 'このセッションにはパスキーが必要です'
+    'ja': 'このセッションにはパスコードが必要です'
   },
-  'error.invalidPasskey': {
-    'en': 'Invalid passkey',
+  'control.passcodePlaceholder': {
+    'en': '4-digit passcode',
+    'zh-TW': '4 位數字密碼',
+    'ja': '4桁のパスコード'
+  },
+  'error.invalidPasscode': {
+    'en': 'Invalid passcode',
     'zh-TW': '密碼錯誤',
-    'ja': 'パスキーが無効です'
+    'ja': 'パスコードが無効です'
   },
 
   // Handout page
@@ -527,10 +595,10 @@ const translations = {
     'zh-TW': '活動儀表板',
     'ja': 'イベントダッシュボード'
   },
-  'dashboard.enterPin': {
-    'en': 'Enter the session PIN to view dashboard',
-    'zh-TW': '請輸入活動 PIN 碼以查看儀表板',
-    'ja': 'ダッシュボードを表示するにはPINを入力'
+  'dashboard.enterCode': {
+    'en': 'Enter the session code to view dashboard',
+    'zh-TW': '請輸入活動代碼以查看儀表板',
+    'ja': 'ダッシュボードを表示するにはセッションコードを入力'
   },
   'dashboard.autoRefresh': {
     'en': 'Auto-refreshing every 2 seconds',
@@ -779,9 +847,9 @@ const translations = {
     'ja': '🎉 抽選作成完了！'
   },
   'session.success.codeLabel': {
-    'en': 'Your Session Code (also your PIN):',
-    'zh-TW': '您的活動代碼 (同時也是 PIN 碼)：',
-    'ja': 'セッションコード (PINと同じ):'
+    'en': 'Your Session Code:',
+    'zh-TW': '您的活動代碼：',
+    'ja': 'セッションコード:'
   },
   'session.success.shareHint': {
     'en': 'Share this code with your co-hosts. They\'ll need it to access host controls.',
@@ -904,10 +972,10 @@ const translations = {
     'zh-TW': '繼續',
     'ja': '続行'
   },
-  'common.invalidPin': {
-    'en': 'Invalid PIN',
-    'zh-TW': 'PIN 碼錯誤',
-    'ja': 'PINが正しくありません'
+  'common.sessionNotFound': {
+    'en': 'Session not found',
+    'zh-TW': '找不到此活動',
+    'ja': 'セッションが見つかりません'
   },
   'common.tryAgain': {
     'en': 'Try Again',
@@ -921,10 +989,10 @@ const translations = {
     'zh-TW': '找不到此活動',
     'ja': 'セッションが見つかりません'
   },
-  'error.invalidPin': {
-    'en': 'Invalid PIN',
-    'zh-TW': 'PIN 碼錯誤',
-    'ja': 'PINが正しくありません'
+  'error.invalidSessionCode': {
+    'en': 'Invalid session code',
+    'zh-TW': '活動代碼錯誤',
+    'ja': 'セッションコードが正しくありません'
   },
   'error.sessionClosed': {
     'en': 'This raffle has ended',
@@ -963,6 +1031,11 @@ function setLanguage(lang) {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
     el.placeholder = t(key);
+  });
+  // Update title attributes (tooltips)
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    el.title = t(key);
   });
 }
 

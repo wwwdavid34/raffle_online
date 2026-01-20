@@ -36,7 +36,7 @@ app.post('/api/session', async (c) => {
     eventName: string;
     language?: string;
     theme?: string;
-    passkey?: string;
+    passcode?: string;  // 4-digit passcode for authentication
     redrawReturnToPool?: boolean;
   };
 
@@ -57,7 +57,7 @@ app.post('/api/session', async (c) => {
       language: body.language || 'en',
       theme: body.theme || 'default',
       pin: sessionId,  // PIN is the session ID itself
-      passkey: body.passkey || undefined,
+      passcode: body.passcode || undefined,  // 4-digit passcode
       redrawReturnToPool: body.redrawReturnToPool ?? true
     })
   }));
@@ -116,10 +116,26 @@ app.post('/api/session/:sessionId/verify-pin', async (c) => {
   return c.json(data, response.status as any);
 });
 
+// API: Verify passcode
+app.post('/api/session/:sessionId/verify-passcode', async (c) => {
+  const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { passcode: string };
+  const stub = getSessionStub(c.env, sessionId);
+
+  const response = await stub.fetch(new Request('http://do/verify-passcode?sessionId=' + sessionId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }));
+
+  const data = await response.json();
+  return c.json(data, response.status as any);
+});
+
 // API: Create ticket batch
 app.post('/api/session/:sessionId/batch', async (c) => {
   const sessionId = c.req.param('sessionId');
-  const body = await c.req.json() as { ticketCount: number; label?: string };
+  const body = await c.req.json() as { ticketCount: number; label?: string; passcode?: string };
   const stub = getSessionStub(c.env, sessionId);
 
   const response = await stub.fetch(new Request('http://do/create-batch?sessionId=' + sessionId, {
@@ -151,10 +167,13 @@ app.post('/api/session/:sessionId/claim', async (c) => {
 // API: Lock registration
 app.post('/api/session/:sessionId/lock', async (c) => {
   const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { passcode?: string };
   const stub = getSessionStub(c.env, sessionId);
 
   const response = await stub.fetch(new Request('http://do/lock?sessionId=' + sessionId, {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   }));
 
   const data = await response.json();
@@ -164,10 +183,13 @@ app.post('/api/session/:sessionId/lock', async (c) => {
 // API: Reopen registration
 app.post('/api/session/:sessionId/reopen', async (c) => {
   const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { passcode?: string };
   const stub = getSessionStub(c.env, sessionId);
 
   const response = await stub.fetch(new Request('http://do/reopen?sessionId=' + sessionId, {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   }));
 
   const data = await response.json();
@@ -177,10 +199,13 @@ app.post('/api/session/:sessionId/reopen', async (c) => {
 // API: Draw winner
 app.post('/api/session/:sessionId/draw', async (c) => {
   const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { passcode?: string };
   const stub = getSessionStub(c.env, sessionId);
 
   const response = await stub.fetch(new Request('http://do/draw?sessionId=' + sessionId, {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   }));
 
   const data = await response.json();
@@ -190,10 +215,13 @@ app.post('/api/session/:sessionId/draw', async (c) => {
 // API: Redraw
 app.post('/api/session/:sessionId/redraw', async (c) => {
   const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { passcode?: string };
   const stub = getSessionStub(c.env, sessionId);
 
   const response = await stub.fetch(new Request('http://do/redraw?sessionId=' + sessionId, {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   }));
 
   const data = await response.json();
@@ -203,10 +231,13 @@ app.post('/api/session/:sessionId/redraw', async (c) => {
 // API: Confirm claim (host confirms winner received prize)
 app.post('/api/session/:sessionId/confirm-claim', async (c) => {
   const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { passcode?: string };
   const stub = getSessionStub(c.env, sessionId);
 
   const response = await stub.fetch(new Request('http://do/confirm-claim?sessionId=' + sessionId, {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   }));
 
   const data = await response.json();
@@ -216,10 +247,13 @@ app.post('/api/session/:sessionId/confirm-claim', async (c) => {
 // API: Close session
 app.post('/api/session/:sessionId/close', async (c) => {
   const sessionId = c.req.param('sessionId');
+  const body = await c.req.json() as { passcode?: string };
   const stub = getSessionStub(c.env, sessionId);
 
   const response = await stub.fetch(new Request('http://do/close?sessionId=' + sessionId, {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   }));
 
   const data = await response.json();
@@ -250,7 +284,7 @@ app.post('/api/session/:sessionId/verify', async (c) => {
 // API: Mark ticket as claimed
 app.post('/api/session/:sessionId/mark-claimed', async (c) => {
   const sessionId = c.req.param('sessionId');
-  const body = await c.req.json() as { ticketId: string };
+  const body = await c.req.json() as { ticketId: string; passcode?: string };
   const stub = getSessionStub(c.env, sessionId);
 
   const response = await stub.fetch(new Request('http://do/mark-claimed?sessionId=' + sessionId, {

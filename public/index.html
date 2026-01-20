@@ -144,22 +144,22 @@
       <div class="form-group">
         <label data-i18n="session.create.theme">Theme</label>
         <div class="theme-picker" id="themePicker">
-          <div class="theme-option selected" data-theme="default" title="Default"></div>
-          <div class="theme-option" data-theme="ocean" title="Ocean"></div>
-          <div class="theme-option" data-theme="sunset" title="Sunset"></div>
-          <div class="theme-option" data-theme="forest" title="Forest"></div>
-          <div class="theme-option" data-theme="purple" title="Purple"></div>
-          <div class="theme-option" data-theme="gold" title="Gold"></div>
-          <div class="theme-option" data-theme="rose" title="Rose"></div>
-          <div class="theme-option" data-theme="light" title="Light"></div>
+          <div class="theme-option selected" data-theme="default" data-i18n-title="theme.default"></div>
+          <div class="theme-option" data-theme="ocean" data-i18n-title="theme.ocean"></div>
+          <div class="theme-option" data-theme="sunset" data-i18n-title="theme.sunset"></div>
+          <div class="theme-option" data-theme="forest" data-i18n-title="theme.forest"></div>
+          <div class="theme-option" data-theme="purple" data-i18n-title="theme.purple"></div>
+          <div class="theme-option" data-theme="gold" data-i18n-title="theme.gold"></div>
+          <div class="theme-option" data-theme="rose" data-i18n-title="theme.rose"></div>
+          <div class="theme-option" data-theme="light" data-i18n-title="theme.light"></div>
 
           <div class="theme-section-label" data-i18n="session.create.occasionThemes">Occasions</div>
-          <div class="theme-option" data-theme="chinese-new-year" title="Chinese New Year 🧧"></div>
-          <div class="theme-option" data-theme="halloween" title="Halloween 🎃"></div>
-          <div class="theme-option" data-theme="christmas" title="Christmas 🎄"></div>
-          <div class="theme-option" data-theme="valentines" title="Valentine's 💕"></div>
-          <div class="theme-option" data-theme="spring" title="Spring 🌸"></div>
-          <div class="theme-option" data-theme="summer" title="Summer ☀️"></div>
+          <div class="theme-option" data-theme="chinese-new-year" data-i18n-title="theme.chineseNewYear"></div>
+          <div class="theme-option" data-theme="halloween" data-i18n-title="theme.halloween"></div>
+          <div class="theme-option" data-theme="christmas" data-i18n-title="theme.christmas"></div>
+          <div class="theme-option" data-theme="valentines" data-i18n-title="theme.valentines"></div>
+          <div class="theme-option" data-theme="spring" data-i18n-title="theme.spring"></div>
+          <div class="theme-option" data-theme="summer" data-i18n-title="theme.summer"></div>
         </div>
         <input type="hidden" id="theme" value="default">
       </div>
@@ -175,16 +175,15 @@
       </div>
 
       <div class="form-group">
-        <label data-i18n="session.create.passkey">Passkey (optional)</label>
-        <input
-          type="password"
-          id="passkey"
-          maxlength="20"
-          data-i18n-placeholder="session.create.passkeyPlaceholder"
-          placeholder="Extra security code"
-        >
-        <p class="text-secondary" style="font-size: 0.75rem; margin-top: 0.5rem;" data-i18n="session.create.passkeyHint">
-          Required for host controls if set. Session ID alone won't grant access.
+        <label data-i18n="session.create.passcode">Passcode (4 digits, optional)</label>
+        <div class="passcode-input-container" style="display: flex; gap: 0.5rem; justify-content: center;">
+          <input type="text" class="passcode-digit" maxlength="1" inputmode="numeric" data-index="0" style="width: 3rem; height: 3rem; text-align: center; font-size: 1.5rem; border-radius: 8px; border: 2px solid var(--color-border);">
+          <input type="text" class="passcode-digit" maxlength="1" inputmode="numeric" data-index="1" style="width: 3rem; height: 3rem; text-align: center; font-size: 1.5rem; border-radius: 8px; border: 2px solid var(--color-border);">
+          <input type="text" class="passcode-digit" maxlength="1" inputmode="numeric" data-index="2" style="width: 3rem; height: 3rem; text-align: center; font-size: 1.5rem; border-radius: 8px; border: 2px solid var(--color-border);">
+          <input type="text" class="passcode-digit" maxlength="1" inputmode="numeric" data-index="3" style="width: 3rem; height: 3rem; text-align: center; font-size: 1.5rem; border-radius: 8px; border: 2px solid var(--color-border);">
+        </div>
+        <p class="text-secondary" style="font-size: 0.75rem; margin-top: 0.5rem; text-align: center;" data-i18n="session.create.passcodeHint">
+          Required for host controls if set
         </p>
       </div>
 
@@ -269,6 +268,36 @@
       setLanguage(languageSelect.value);
     });
 
+    // Passcode digit input handling
+    const passcodeDigits = document.querySelectorAll('.passcode-digit');
+    passcodeDigits.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        const value = e.target.value.replace(/\D/g, '');
+        e.target.value = value;
+        if (value && index < passcodeDigits.length - 1) {
+          passcodeDigits[index + 1].focus();
+        }
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          passcodeDigits[index - 1].focus();
+        }
+      });
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const paste = (e.clipboardData || window.clipboardData).getData('text');
+        const digits = paste.replace(/\D/g, '').slice(0, 4);
+        digits.split('').forEach((digit, i) => {
+          if (passcodeDigits[i]) passcodeDigits[i].value = digit;
+        });
+      });
+    });
+
+    function getPasscode() {
+      const digits = Array.from(passcodeDigits).map(i => i.value).join('');
+      return digits.length === 4 ? digits : (digits.length > 0 ? null : undefined);
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -276,10 +305,15 @@
       const language = document.getElementById('language').value;
       const theme = document.getElementById('theme').value;
       const redrawReturnToPool = !document.getElementById('redrawExclude').checked;
-      const passkey = document.getElementById('passkey').value.trim() || undefined;
+      const passcode = getPasscode();
 
       if (!eventName) {
         showError('Please enter an event name');
+        return;
+      }
+
+      if (passcode === null) {
+        showError('Passcode must be exactly 4 digits or empty');
         return;
       }
 
@@ -290,7 +324,7 @@
         const response = await fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventName, language, theme, redrawReturnToPool, passkey })
+          body: JSON.stringify({ eventName, language, theme, redrawReturnToPool, passcode })
         });
 
         const data = await response.json();

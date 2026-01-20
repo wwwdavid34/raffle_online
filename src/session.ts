@@ -119,6 +119,36 @@ export class RaffleSession implements DurableObject {
     }
   }
 
+  // Verify passcode for host control endpoints
+  private async verifyAuth(request: Request): Promise<{ valid: boolean; error?: string }> {
+    if (!this.data.session) {
+      return { valid: false, error: 'Session not found' };
+    }
+
+    // If session has no passcode set, authentication not required
+    if (!this.data.session.passkeyHash) {
+      return { valid: true };
+    }
+
+    try {
+      const body = await request.clone().json() as { passcode?: string };
+      const { passcode } = body;
+
+      if (!passcode) {
+        return { valid: false, error: 'Passcode required' };
+      }
+
+      const passcodeHash = await hashPin(passcode);
+      if (passcodeHash !== this.data.session.passkeyHash) {
+        return { valid: false, error: 'Invalid passcode' };
+      }
+
+      return { valid: true };
+    } catch {
+      return { valid: false, error: 'Invalid request body' };
+    }
+  }
+
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -143,6 +173,10 @@ export class RaffleSession implements DurableObject {
         return this.handleVerifyPin(request);
       }
 
+      if (request.method === 'POST' && path === '/verify-passcode') {
+        return this.handleVerifyPasscode(request);
+      }
+
       if (request.method === 'POST' && path === '/create-batch') {
         return this.handleCreateBatch(request);
       }
@@ -152,27 +186,27 @@ export class RaffleSession implements DurableObject {
       }
 
       if (request.method === 'POST' && path === '/lock') {
-        return this.handleLock();
+        return this.handleLock(request);
       }
 
       if (request.method === 'POST' && path === '/reopen') {
-        return this.handleReopen();
+        return this.handleReopen(request);
       }
 
       if (request.method === 'POST' && path === '/draw') {
-        return this.handleDraw();
+        return this.handleDraw(request);
       }
 
       if (request.method === 'POST' && path === '/redraw') {
-        return this.handleRedraw();
+        return this.handleRedraw(request);
       }
 
       if (request.method === 'POST' && path === '/confirm-claim') {
-        return this.handleConfirmClaim();
+        return this.handleConfirmClaim(request);
       }
 
       if (request.method === 'POST' && path === '/close') {
-        return this.handleClose();
+        return this.handleClose(request);
       }
 
       if (request.method === 'POST' && path === '/verify-ticket') {
@@ -207,7 +241,7 @@ export class RaffleSession implements DurableObject {
       language: Language;
       theme?: Theme;
       pin: string;
-      passkey?: string;
+      passcode?: string;  // 4-digit passcode for authentication
       redrawReturnToPool?: boolean;
     };
 
@@ -217,7 +251,7 @@ export class RaffleSession implements DurableObject {
       language: body.language || 'en',
       theme: body.theme || 'default',
       pinHash: await hashPin(body.pin),
-      passkeyHash: body.passkey ? await hashPin(body.passkey) : undefined,
+      passkeyHash: body.passcode ? await hashPin(body.passcode) : undefined,
       state: 'OPEN',
       createdAt: Date.now(),
       lastActiveAt: Date.now(),
@@ -256,7 +290,8 @@ export class RaffleSession implements DurableObject {
       availableTickets,
       batchCount,
       claimedBatches,
-      currentWinner: this.data.session.currentWinner
+      currentWinner: this.data.session.currentWinner,
+      hasPasscode: !!this.data.session.passkeyHash
     }), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -387,7 +422,7 @@ export class RaffleSession implements DurableObject {
     });
   }
 
-  private async handleCreateBatch(request: Request): Promise<Response> {
+  private async handleVerifyPasscode(request: Request): Promise<Response> {
     if (!this.data.session) {
       return new Response(JSON.stringify({ error: 'Session not found' }), {
         status: 404,
@@ -395,17 +430,56 @@ export class RaffleSession implements DurableObject {
       });
     }
 
-    if (this.data.session.state !== 'OPEN') {
+    // If no passcode set, always valid
+    if (!this.data.session.passkeyHash) {
+      return new Response(JSON.stringify({ valid: true }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { passcode } = await request.json() as { passcode: string };
+
+    if (!passcode) {
+      return new Response(JSON.stringify({ valid: false }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const passcodeHash = await hashPin(passcode);
+    if (passcodeHash !== this.data.session.passkeyHash) {
+      return new Response(JSON.stringify({ valid: false }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    return new Response(JSON.stringify({ valid: true }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  private async handleCreateBatch(request: Request): Promise<Response> {
+    const auth = await this.verifyAuth(request);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (this.data.session!.state !== 'OPEN') {
       return new Response(JSON.stringify({ error: 'Registration is closed' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const { ticketCount, label } = await request.json() as {
+    const body = await request.clone().json() as {
       ticketCount: number;
       label?: string;
+      pin?: string;
+      passkey?: string;
     };
+    const { ticketCount, label } = body;
 
     if (ticketCount < 1 || ticketCount > 20) {
       return new Response(JSON.stringify({ error: 'Invalid ticket count (1-20)' }), {
@@ -443,7 +517,7 @@ export class RaffleSession implements DurableObject {
 
     // Generate signed QR payload
     const payload = {
-      s: this.data.session.sessionId,
+      s: this.data.session!.sessionId,
       b: batchId,
       t: 'batch'
     };
@@ -526,22 +600,23 @@ export class RaffleSession implements DurableObject {
     });
   }
 
-  private async handleLock(): Promise<Response> {
-    if (!this.data.session) {
-      return new Response(JSON.stringify({ error: 'Session not found' }), {
-        status: 404,
+  private async handleLock(request: Request): Promise<Response> {
+    const auth = await this.verifyAuth(request);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    if (this.data.session.state !== 'OPEN') {
+    if (this.data.session!.state !== 'OPEN') {
       return new Response(JSON.stringify({ error: 'Cannot lock session in current state' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    this.data.session.state = 'LOCKED';
+    this.data.session!.state = 'LOCKED';
     this.updateActivity();
     await this.save();
 
@@ -550,22 +625,23 @@ export class RaffleSession implements DurableObject {
     });
   }
 
-  private async handleReopen(): Promise<Response> {
-    if (!this.data.session) {
-      return new Response(JSON.stringify({ error: 'Session not found' }), {
-        status: 404,
+  private async handleReopen(request: Request): Promise<Response> {
+    const auth = await this.verifyAuth(request);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    if (this.data.session.state !== 'LOCKED') {
+    if (this.data.session!.state !== 'LOCKED') {
       return new Response(JSON.stringify({ error: 'Can only reopen a locked session' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    this.data.session.state = 'OPEN';
+    this.data.session!.state = 'OPEN';
     this.updateActivity();
     await this.save();
 
@@ -574,15 +650,57 @@ export class RaffleSession implements DurableObject {
     });
   }
 
-  private async handleDraw(): Promise<Response> {
-    if (!this.data.session) {
-      return new Response(JSON.stringify({ error: 'Session not found' }), {
-        status: 404,
+  private async handleDraw(request: Request): Promise<Response> {
+    const auth = await this.verifyAuth(request);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    if (this.data.session.state !== 'LOCKED') {
+    return this.performDraw();
+  }
+
+  private async handleRedraw(request: Request): Promise<Response> {
+    const auth = await this.verifyAuth(request);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (this.data.session!.state !== 'DRAWING' || !this.data.session!.currentWinner) {
+      return new Response(JSON.stringify({ error: 'No active draw to redraw' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Handle current winner based on redrawReturnToPool setting
+    const currentWinner = this.data.tickets[this.data.session!.currentWinner.ticketId];
+    if (currentWinner) {
+      if (this.data.session!.redrawReturnToPool) {
+        // Return to pool - mark as not winner so they can be drawn again
+        currentWinner.isWinner = false;
+      }
+      // If redrawReturnToPool is false, keep isWinner = true (excluded from future draws)
+    }
+
+    // Reset to locked state
+    this.data.session!.state = 'LOCKED';
+    this.data.session!.currentWinner = undefined;
+
+    await this.save();
+
+    // Trigger new draw (auth already verified)
+    return this.performDraw();
+  }
+
+  // Internal draw method (no auth check - called after auth is verified)
+  private async performDraw(): Promise<Response> {
+    if (this.data.session!.state !== 'LOCKED') {
       return new Response(JSON.stringify({ error: 'Must lock registration before drawing' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
@@ -607,11 +725,11 @@ export class RaffleSession implements DurableObject {
     const winner = availableTickets[randomIndex];
 
     winner.isWinner = true;
-    this.data.session.state = 'DRAWING';
+    this.data.session!.state = 'DRAWING';
 
     // Set claim deadline (60 seconds)
     const now = Date.now();
-    this.data.session.currentWinner = {
+    this.data.session!.currentWinner = {
       ticketId: winner.ticketId,
       batchId: winner.batchId,
       drawnAt: now,
@@ -628,70 +746,36 @@ export class RaffleSession implements DurableObject {
       batchId: winner.batchId,
       ticketIndex: winner.index,
       batchLabel: batch?.label,
-      claimDeadline: this.data.session.currentWinner.claimDeadline
+      claimDeadline: this.data.session!.currentWinner.claimDeadline
     }), {
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  private async handleRedraw(): Promise<Response> {
-    if (!this.data.session) {
-      return new Response(JSON.stringify({ error: 'Session not found' }), {
-        status: 404,
+  private async handleConfirmClaim(request: Request): Promise<Response> {
+    const auth = await this.verifyAuth(request);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    if (this.data.session.state !== 'DRAWING' || !this.data.session.currentWinner) {
-      return new Response(JSON.stringify({ error: 'No active draw to redraw' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Handle current winner based on redrawReturnToPool setting
-    const currentWinner = this.data.tickets[this.data.session.currentWinner.ticketId];
-    if (currentWinner) {
-      if (this.data.session.redrawReturnToPool) {
-        // Return to pool - mark as not winner so they can be drawn again
-        currentWinner.isWinner = false;
-      }
-      // If redrawReturnToPool is false, keep isWinner = true (excluded from future draws)
-    }
-
-    // Reset to locked state
-    this.data.session.state = 'LOCKED';
-    this.data.session.currentWinner = undefined;
-
-    await this.save();
-
-    // Trigger new draw
-    return this.handleDraw();
-  }
-
-  private async handleConfirmClaim(): Promise<Response> {
-    if (!this.data.session) {
-      return new Response(JSON.stringify({ error: 'Session not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (this.data.session.state !== 'DRAWING' || !this.data.session.currentWinner) {
+    if (this.data.session!.state !== 'DRAWING' || !this.data.session!.currentWinner) {
       return new Response(JSON.stringify({ error: 'No active winner to confirm' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const winner = this.data.tickets[this.data.session.currentWinner.ticketId];
+    const winner = this.data.tickets[this.data.session!.currentWinner.ticketId];
     if (winner) {
       winner.claimedAt = Date.now();
     }
 
     // Go back to locked state for next draw
-    this.data.session.state = 'LOCKED';
-    this.data.session.currentWinner = undefined;
+    this.data.session!.state = 'LOCKED';
+    this.data.session!.currentWinner = undefined;
 
     this.updateActivity();
     await this.save();
@@ -701,16 +785,17 @@ export class RaffleSession implements DurableObject {
     });
   }
 
-  private async handleClose(): Promise<Response> {
-    if (!this.data.session) {
-      return new Response(JSON.stringify({ error: 'Session not found' }), {
-        status: 404,
+  private async handleClose(request: Request): Promise<Response> {
+    const auth = await this.verifyAuth(request);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    this.data.session.state = 'CLOSED';
-    this.data.session.currentWinner = undefined;
+    this.data.session!.state = 'CLOSED';
+    this.data.session!.currentWinner = undefined;
 
     this.updateActivity();
     await this.save();
@@ -810,14 +895,16 @@ export class RaffleSession implements DurableObject {
   }
 
   private async handleMarkClaimed(request: Request): Promise<Response> {
-    if (!this.data.session) {
-      return new Response(JSON.stringify({ error: 'Session not found' }), {
-        status: 404,
+    const auth = await this.verifyAuth(request);
+    if (!auth.valid) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const { ticketId } = await request.json() as { ticketId: string };
+    const body = await request.clone().json() as { ticketId: string; pin?: string; passkey?: string };
+    const { ticketId } = body;
 
     const ticket = this.data.tickets[ticketId];
     if (!ticket) {
