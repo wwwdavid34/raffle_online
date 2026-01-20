@@ -366,25 +366,27 @@
           <span data-i18n="dashboard.qr.title">Quick Access QR Codes</span>
         </div>
         <div class="qr-tabs" id="qrTabs">
-          <button type="button" class="qr-tab active" data-page="handout" data-i18n="dashboard.qr.handout">Hand Out</button>
+          <button type="button" class="qr-tab active" data-page="control" data-i18n="dashboard.qr.control">Control</button>
+          <button type="button" class="qr-tab" data-page="handout" data-i18n="dashboard.qr.handout">Hand Out</button>
           <button type="button" class="qr-tab" data-page="draw" data-i18n="dashboard.qr.draw">Draw</button>
           <button type="button" class="qr-tab" data-page="scan" data-i18n="dashboard.qr.scan">Scan</button>
           <button type="button" class="qr-tab" data-page="dashboard" data-i18n="dashboard.qr.dashboard">Dashboard</button>
         </div>
         <div class="qr-display">
           <canvas id="qrCanvas"></canvas>
-          <div class="qr-display-label" id="qrLabel">Hand Out</div>
+          <div class="qr-display-label" id="qrLabel">Control</div>
           <div class="qr-display-url" id="qrUrl"></div>
           <div class="qr-actions">
-            <a href="#" id="qrOpenLink" class="qr-action-btn" target="_blank" data-i18n="dashboard.qr.open">🔗 Open Link</a>
-            <button type="button" id="qrCopyBtn" class="qr-action-btn" data-i18n="dashboard.qr.copy">📋 Copy URL</button>
+            <a href="#" id="qrOpenLink" class="qr-action-btn" target="_blank">↗ Open</a>
+            <button type="button" id="qrCopyBtn" class="qr-action-btn">⧉ Copy</button>
           </div>
         </div>
 
         <div class="nav-links">
-          <a href="#" id="linkHandout" class="nav-link" data-i18n="dashboard.links.handout">Hand Out Tickets</a>
-          <a href="#" id="linkDraw" class="nav-link" data-i18n="dashboard.links.draw">Draw Screen</a>
-          <a href="#" id="linkScan" class="nav-link" data-i18n="dashboard.links.scan">Scan Tickets</a>
+          <a href="#" id="linkControl" class="nav-link">⚙ Control</a>
+          <a href="#" id="linkHandout" class="nav-link">↗ Hand Out</a>
+          <a href="#" id="linkDraw" class="nav-link">▶ Draw</a>
+          <a href="#" id="linkScan" class="nav-link">◎ Scan</a>
         </div>
 
         <div class="refresh-indicator" data-i18n="dashboard.autoRefresh">Auto-refreshing every 2 seconds</div>
@@ -526,6 +528,7 @@
         }
 
         // Set up navigation links
+        document.getElementById('linkControl').href = `/s/${currentSessionId}/control`;
         document.getElementById('linkHandout').href = `/s/${currentSessionId}/handout`;
         document.getElementById('linkDraw').href = `/s/${currentSessionId}/draw`;
         document.getElementById('linkScan').href = `/s/${currentSessionId}/scan`;
@@ -653,7 +656,7 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    let currentQRPage = 'handout';
+    let currentQRPage = 'control';
 
     function generateQRCodes() {
       // Set up tab click handlers
@@ -670,7 +673,7 @@
       });
 
       // Show initial QR code
-      showQRCode('handout');
+      showQRCode('control');
     }
 
     function showQRCode(page) {
@@ -695,6 +698,7 @@
 
       // Update label and URL
       const labels = {
+        control: t('dashboard.qr.control'),
         handout: t('dashboard.qr.handout'),
         draw: t('dashboard.qr.draw'),
         scan: t('dashboard.qr.scan'),
@@ -708,7 +712,7 @@
 
       // Reset copy button state
       copyBtn.classList.remove('copied');
-      copyBtn.innerHTML = `📋 ${t('dashboard.qr.copy')}`;
+      copyBtn.textContent = '⧉ Copy';
     }
 
     function setupCopyButton() {
@@ -720,11 +724,11 @@
         try {
           await navigator.clipboard.writeText(url);
           copyBtn.classList.add('copied');
-          copyBtn.innerHTML = `✓ ${t('dashboard.qr.copied')}`;
+          copyBtn.textContent = '✓ Copied';
 
           setTimeout(() => {
             copyBtn.classList.remove('copied');
-            copyBtn.innerHTML = `📋 ${t('dashboard.qr.copy')}`;
+            copyBtn.textContent = '⧉ Copy';
           }, 2000);
         } catch (err) {
           console.error('Copy failed:', err);

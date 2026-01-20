@@ -142,6 +142,16 @@ const translations = {
     'zh-TW': '已領取！',
     'ja': '受取済み！'
   },
+  'handout.manualClaim': {
+    'en': '✓ Mark as Claimed',
+    'zh-TW': '✓ 手動標記已領取',
+    'ja': '✓ 受取済みにする'
+  },
+  'handout.manualClaimHint': {
+    'en': 'Use if participant cannot scan QR code',
+    'zh-TW': '若參與者無法掃描 QR Code 時使用',
+    'ja': '参加者がQRコードを読み取れない場合に使用'
+  },
   'handout.nextBatch': {
     'en': 'Next Batch',
     'zh-TW': '下一批',
@@ -578,11 +588,78 @@ const translations = {
     'ja': 'チケット読取'
   },
 
+  // Control panel page
+  'control.title': {
+    'en': 'Control Panel',
+    'zh-TW': '控制面板',
+    'ja': 'コントロールパネル'
+  },
+  'control.enterPin': {
+    'en': 'Enter session code to access controls',
+    'zh-TW': '輸入活動代碼以存取控制面板',
+    'ja': 'セッションコードを入力してコントロールにアクセス'
+  },
+  'control.status': {
+    'en': 'Status:',
+    'zh-TW': '狀態：',
+    'ja': 'ステータス：'
+  },
+  'control.stats.total': {
+    'en': 'Total',
+    'zh-TW': '總數',
+    'ja': '合計'
+  },
+  'control.stats.available': {
+    'en': 'Available',
+    'zh-TW': '可抽',
+    'ja': '残り'
+  },
+  'control.stats.winners': {
+    'en': 'Winners',
+    'zh-TW': '中獎',
+    'ja': '当選'
+  },
+  'control.registration': {
+    'en': 'Registration',
+    'zh-TW': '報名登記',
+    'ja': '受付'
+  },
+  'control.drawing': {
+    'en': 'Drawing',
+    'zh-TW': '抽獎',
+    'ja': '抽選'
+  },
+  'control.quickActions': {
+    'en': 'Quick Actions',
+    'zh-TW': '快速操作',
+    'ja': 'クイックアクション'
+  },
+  'control.scanTicket': {
+    'en': 'Scan & Verify Ticket',
+    'zh-TW': '掃描驗證票券',
+    'ja': 'チケットを読取・確認'
+  },
+  'control.sessionClosed': {
+    'en': 'This session has been closed.',
+    'zh-TW': '此活動已結束。',
+    'ja': 'このセッションは終了しました。'
+  },
+  'control.confirmClose': {
+    'en': 'Are you sure you want to end this raffle?',
+    'zh-TW': '確定要結束此抽獎嗎？',
+    'ja': 'この抽選を終了してもよろしいですか？'
+  },
+
   // Dashboard QR codes
   'dashboard.qr.title': {
     'en': 'Quick Access QR Codes',
     'zh-TW': '快速存取 QR Code',
     'ja': 'クイックアクセスQRコード'
+  },
+  'dashboard.qr.control': {
+    'en': 'Control',
+    'zh-TW': '控制',
+    'ja': 'コントロール'
   },
   'dashboard.qr.handout': {
     'en': 'Hand Out',
@@ -625,6 +702,11 @@ const translations = {
     'en': 'Scan to Open on Mobile',
     'zh-TW': '掃描以在手機上開啟',
     'ja': 'スキャンしてモバイルで開く'
+  },
+  'session.qr.control': {
+    'en': 'Control',
+    'zh-TW': '控制',
+    'ja': 'コントロール'
   },
   'session.qr.handout': {
     'en': 'Hand Out',

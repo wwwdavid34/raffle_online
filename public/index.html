@@ -172,27 +172,29 @@
         <p class="text-secondary" style="font-size: 0.9rem;">Share this code with your co-hosts. They'll need it to access host controls.</p>
 
         <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
-          <a id="linkHandout" href="#" class="btn btn-primary">📤 Hand Out Tickets</a>
-          <a id="linkDraw" href="#" class="btn btn-secondary">🎲 Draw Page (Projector)</a>
-          <a id="linkScan" href="#" class="btn btn-secondary">📱 Scan & Verify</a>
-          <a id="linkDashboard" href="#" class="btn btn-secondary">📊 Dashboard</a>
+          <a id="linkControl" href="#" class="btn btn-primary">⚙ Control Panel</a>
+          <a id="linkHandout" href="#" class="btn btn-secondary">↗ Hand Out Tickets</a>
+          <a id="linkDraw" href="#" class="btn btn-secondary">▶ Draw Page (Projector)</a>
+          <a id="linkScan" href="#" class="btn btn-secondary">◎ Scan & Verify</a>
+          <a id="linkDashboard" href="#" class="btn btn-secondary">▤ Dashboard</a>
         </div>
 
         <div class="qr-section">
           <div class="qr-section-title" data-i18n="session.qr.title">Scan to Open on Mobile</div>
           <div class="qr-tabs" id="qrTabs">
-            <button type="button" class="qr-tab active" data-page="handout" data-i18n="session.qr.handout">Hand Out</button>
+            <button type="button" class="qr-tab active" data-page="control" data-i18n="session.qr.control">Control</button>
+            <button type="button" class="qr-tab" data-page="handout" data-i18n="session.qr.handout">Hand Out</button>
             <button type="button" class="qr-tab" data-page="draw" data-i18n="session.qr.draw">Draw</button>
             <button type="button" class="qr-tab" data-page="scan" data-i18n="session.qr.scan">Scan</button>
             <button type="button" class="qr-tab" data-page="dashboard" data-i18n="session.qr.dashboard">Dashboard</button>
           </div>
           <div class="qr-display">
             <canvas id="qrCanvas"></canvas>
-            <div class="qr-display-label" id="qrLabel">Hand Out</div>
+            <div class="qr-display-label" id="qrLabel">Control</div>
             <div class="qr-display-url" id="qrUrl"></div>
             <div class="qr-actions">
-              <a href="#" id="qrOpenLink" class="qr-action-btn" target="_blank" data-i18n="session.qr.open">🔗 Open Link</a>
-              <button type="button" id="qrCopyBtn" class="qr-action-btn" data-i18n="session.qr.copy">📋 Copy URL</button>
+              <a href="#" id="qrOpenLink" class="qr-action-btn" target="_blank">↗ Open</a>
+              <button type="button" id="qrCopyBtn" class="qr-action-btn">⧉ Copy</button>
             </div>
           </div>
         </div>
@@ -292,6 +294,7 @@
       document.getElementById('sessionCode').textContent = sessionId;
 
       // Set links
+      document.getElementById('linkControl').href = `/s/${sessionId}/control`;
       document.getElementById('linkHandout').href = `/s/${sessionId}/handout`;
       document.getElementById('linkDraw').href = `/s/${sessionId}/draw`;
       document.getElementById('linkScan').href = `/s/${sessionId}/scan`;
@@ -302,7 +305,7 @@
     }
 
     let currentSessionId = null;
-    let currentQRPage = 'handout';
+    let currentQRPage = 'control';
 
     function generateQRCodes(sessionId) {
       currentSessionId = sessionId;
@@ -329,11 +332,11 @@
         try {
           await navigator.clipboard.writeText(url);
           copyBtn.classList.add('copied');
-          copyBtn.innerHTML = `✓ ${t('session.qr.copied')}`;
+          copyBtn.textContent = '✓ Copied';
 
           setTimeout(() => {
             copyBtn.classList.remove('copied');
-            copyBtn.innerHTML = `📋 ${t('session.qr.copy')}`;
+            copyBtn.textContent = '⧉ Copy';
           }, 2000);
         } catch (err) {
           console.error('Copy failed:', err);
@@ -341,7 +344,7 @@
       });
 
       // Show initial QR code
-      showQRCode('handout');
+      showQRCode('control');
     }
 
     function showQRCode(page) {
@@ -366,6 +369,7 @@
 
       // Update label and URL
       const labels = {
+        control: t('session.qr.control'),
         handout: t('session.qr.handout'),
         draw: t('session.qr.draw'),
         scan: t('session.qr.scan'),
@@ -379,7 +383,7 @@
 
       // Reset copy button state
       copyBtn.classList.remove('copied');
-      copyBtn.innerHTML = `📋 ${t('session.qr.copy')}`;
+      copyBtn.textContent = '⧉ Copy';
     }
   </script>
 </body>

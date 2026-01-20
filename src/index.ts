@@ -308,6 +308,10 @@ app.get('/s/:sessionId/dashboard', async (c) => {
   return serveAsset(c.req.raw, c.env, '/dashboard.html');
 });
 
+app.get('/s/:sessionId/control', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/control.html');
+});
+
 // Direct page routes (without session ID - will prompt for code)
 app.get('/handout', async (c) => {
   return serveAsset(c.req.raw, c.env, '/handout.html');
@@ -323,6 +327,10 @@ app.get('/scan', async (c) => {
 
 app.get('/dashboard', async (c) => {
   return serveAsset(c.req.raw, c.env, '/dashboard.html');
+});
+
+app.get('/control', async (c) => {
+  return serveAsset(c.req.raw, c.env, '/control.html');
 });
 
 // Serve static files for all other routes

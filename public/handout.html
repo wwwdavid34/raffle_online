@@ -99,6 +99,15 @@
           </span>
         </div>
 
+        <div id="manualClaimSection" class="mt-3">
+          <button type="button" id="manualClaimBtn" class="btn btn-warning btn-block">
+            <span data-i18n="handout.manualClaim">✓ Mark as Claimed</span>
+          </button>
+          <p class="text-center text-secondary mt-1" style="font-size: 0.75rem;" data-i18n="handout.manualClaimHint">
+            Use if participant cannot scan QR code
+          </p>
+        </div>
+
         <button type="button" id="nextBatchBtn" class="btn btn-success mt-3">
           <span data-i18n="handout.nextBatch">Next Batch</span>
         </button>
@@ -302,6 +311,7 @@
     function setupButtons() {
       document.getElementById('createBatchBtn').addEventListener('click', createBatch);
       document.getElementById('nextBatchBtn').addEventListener('click', resetToCreate);
+      document.getElementById('manualClaimBtn').addEventListener('click', manualClaim);
     }
 
     async function createBatch() {
@@ -355,8 +365,55 @@
       document.getElementById('batchStatus').textContent = t('handout.status.unclaimed');
       document.getElementById('batchStatus').className = 'badge badge-warning';
 
+      // Show manual claim section
+      document.getElementById('manualClaimSection').classList.remove('hidden');
+      document.getElementById('manualClaimBtn').disabled = false;
+
       // Poll for claim status
       pollBatchStatus(batch.batchId);
+    }
+
+    async function manualClaim() {
+      if (!currentBatch) return;
+
+      const btn = document.getElementById('manualClaimBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Claiming...';
+
+      try {
+        const response = await fetch(`/api/session/${currentSessionId}/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            batchId: currentBatch.batchId,
+            sig: currentBatch.qrPayload.sig
+          })
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to claim');
+        }
+
+        // Update status
+        document.getElementById('batchStatus').textContent = t('handout.status.claimed');
+        document.getElementById('batchStatus').className = 'badge badge-success';
+
+        // Hide manual claim section
+        document.getElementById('manualClaimSection').classList.add('hidden');
+
+        // Update session data
+        const statusResponse = await fetch(`/api/session/${currentSessionId}`);
+        if (statusResponse.ok) {
+          sessionData = await statusResponse.json();
+          updateStats();
+        }
+
+      } catch (err) {
+        showError(err.message);
+        btn.disabled = false;
+        btn.innerHTML = `<span data-i18n="handout.manualClaim">✓ Mark as Claimed</span>`;
+      }
     }
 
     async function pollBatchStatus(batchId) {
@@ -372,6 +429,7 @@
           if (data.claimedBatches > sessionData.claimedBatches) {
             document.getElementById('batchStatus').textContent = t('handout.status.claimed');
             document.getElementById('batchStatus').className = 'badge badge-success';
+            document.getElementById('manualClaimSection').classList.add('hidden');
             clearInterval(interval);
           }
 
