@@ -151,24 +151,6 @@
       margin-top: 16px;
     }
 
-    .nav-links {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-    }
-    .nav-link {
-      padding: 8px 16px;
-      background: var(--color-surface-2, #f0f0f0);
-      border-radius: 8px;
-      text-decoration: none;
-      color: var(--color-text);
-      font-size: 0.875rem;
-    }
-    .nav-link:hover {
-      background: var(--color-border, #e0e0e0);
-    }
-
     .duration {
       font-size: 0.875rem;
       color: var(--color-text-secondary);
@@ -395,13 +377,6 @@
           </div>
         </div>
 
-        <div class="nav-links">
-          <a href="#" id="linkControl" class="nav-link">⚙ Control</a>
-          <a href="#" id="linkHandout" class="nav-link">↗ Hand Out</a>
-          <a href="#" id="linkDraw" class="nav-link">▶ Draw</a>
-          <a href="#" id="linkScan" class="nav-link">◎ Scan</a>
-        </div>
-
         <div class="refresh-indicator" data-i18n="dashboard.autoRefresh">Auto-refreshing every 2 seconds</div>
       </div>
     </div>
@@ -602,12 +577,6 @@
         if (!pollInterval) {
           pollInterval = setInterval(refreshDashboard, 2000);
         }
-
-        // Set up navigation links
-        document.getElementById('linkControl').href = `/s/${currentSessionId}/control`;
-        document.getElementById('linkHandout').href = `/s/${currentSessionId}/handout`;
-        document.getElementById('linkDraw').href = `/s/${currentSessionId}/draw`;
-        document.getElementById('linkScan').href = `/s/${currentSessionId}/scan`;
 
         // Generate QR codes
         generateQRCodes();
