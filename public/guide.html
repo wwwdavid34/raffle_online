@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raffle System - User Guide</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .guide-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .guide-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--color-primary);
+    }
+    .guide-header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .guide-section {
+      margin-bottom: 2.5rem;
+    }
+    .guide-section h2 {
+      color: var(--color-primary);
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .guide-section h3 {
+      font-size: 1.1rem;
+      margin: 1.5rem 0 0.75rem;
+      color: var(--color-text);
+    }
+    .guide-section p, .guide-section li {
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+    }
+    .guide-section ul, .guide-section ol {
+      margin: 0.75rem 0;
+      padding-left: 1.5rem;
+    }
+    .guide-section li {
+      margin-bottom: 0.5rem;
+    }
+    .tip-box {
+      background: var(--color-surface-2, #f5f5f5);
+      border-left: 4px solid var(--color-primary);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .tip-box strong {
+      color: var(--color-primary);
+    }
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .warning-box strong {
+      color: #856404;
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--color-primary);
+      color: white;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 0.875rem;
+      margin-right: 0.5rem;
+    }
+    .page-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--color-surface, #fff);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      margin: 0.75rem 0;
+    }
+    .page-card-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .page-card-content h4 {
+      margin: 0 0 0.25rem;
+      font-size: 1rem;
+    }
+    .page-card-content p {
+      margin: 0;
+      font-size: 0.875rem;
+    }
+    .toc {
+      background: var(--color-surface-2, #f5f5f5);
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+    .toc h3 {
+      margin: 0 0 1rem;
+      font-size: 1rem;
+    }
+    .toc ul {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+    .toc a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+    .toc a:hover {
+      text-decoration: underline;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .guide-container {
+        padding: 16px;
+      }
+      .guide-header h1 {
+        font-size: 1.5rem;
+      }
+      .guide-section h2 {
+        font-size: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="guide-container">
+    <a href="/" class="back-link">&larr; Back to Home</a>
+
+    <div class="guide-header">
+      <h1>🎟️ Raffle System User Guide</h1>
+      <p>Learn how to create and manage your raffle event</p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#creating">Creating a Raffle Session</a></li>
+        <li><a href="#pages">Understanding the Pages</a></li>
+        <li><a href="#handout">Handing Out Tickets</a></li>
+        <li><a href="#control">Using the Control Panel</a></li>
+        <li><a href="#draw">Running the Draw</a></li>
+        <li><a href="#verify">Verifying Winners</a></li>
+        <li><a href="#dashboard">Monitoring with Dashboard</a></li>
+        <li><a href="#tips">Tips & Best Practices</a></li>
+      </ul>
+    </div>
+
+    <div class="guide-section" id="overview">
+      <h2>Overview</h2>
+      <p>This raffle system allows you to run live raffles at events. Here's how it works:</p>
+      <ol>
+        <li><strong>Create a session</strong> - Get a unique 6-digit session code</li>
+        <li><strong>Hand out tickets</strong> - Create ticket batches and distribute QR codes to participants</li>
+        <li><strong>Participants claim tickets</strong> - They scan the QR to register their tickets</li>
+        <li><strong>Lock & Draw</strong> - Lock registration and draw winners</li>
+        <li><strong>Verify & Claim</strong> - Winners show their QR code to claim prizes</li>
+      </ol>
+    </div>
+
+    <div class="guide-section" id="creating">
+      <h2>Creating a Raffle Session</h2>
+
+      <h3>Step-by-Step</h3>
+      <ol>
+        <li>Go to the <a href="/">home page</a></li>
+        <li>Enter your <strong>Event Name</strong> (e.g., "Company Holiday Party")</li>
+        <li>Select your preferred <strong>Language</strong> (English, 繁體中文, 日本語)</li>
+        <li>Choose a <strong>Theme</strong> to match your event</li>
+        <li>Optionally set a <strong>4-digit Passcode</strong> for host controls</li>
+        <li>Click <strong>Create Raffle</strong></li>
+      </ol>
+
+      <div class="tip-box">
+        <strong>💡 About the Passcode:</strong> If you set a passcode, anyone accessing the Control Panel, Hand Out, or Draw pages will need to enter it. This prevents unauthorized people from controlling your raffle. Leave it empty if you don't need this security.
+      </div>
+
+      <h3>After Creation</h3>
+      <p>You'll receive a <strong>6-digit Session Code</strong>. This code is used to:</p>
+      <ul>
+        <li>Access all pages related to your raffle</li>
+        <li>Share with co-hosts so they can help manage the event</li>
+        <li>Let participants know which raffle they're joining</li>
+      </ul>
+
+      <div class="warning-box">
+        <strong>⚠️ Important:</strong> Save your session code! You'll need it to access your raffle later.
+      </div>
+    </div>
+
+    <div class="guide-section" id="pages">
+      <h2>Understanding the Pages</h2>
+      <p>Your raffle has several pages, each with a specific purpose:</p>
+
+      <div class="page-card">
+        <div class="page-card-icon">⚙️</div>
+        <div class="page-card-content">
+          <h4>Control Panel</h4>
+          <p>The main hub for managing your raffle. Lock registration, draw winners, confirm claims, and end the raffle. Best used on a phone or tablet by the host.</p>
+        </div>
+      </div>
+
+      <div class="page-card">
+        <div class="page-card-icon">🎫</div>
+        <div class="page-card-content">
+          <h4>Hand Out</h4>
+          <p>Create ticket batches and display QR codes for participants to scan. Use this at the registration desk or entrance.</p>
+        </div>
+      </div>
+
+      <div class="page-card">
+        <div class="page-card-icon">🎯</div>
+        <div class="page-card-content">
+          <h4>Draw Page</h4>
+          <p>Full-screen display showing the draw animation and winner. Project this on a big screen for everyone to see. Can also control the draw directly from this page.</p>
+        </div>
+      </div>
+
+      <div class="page-card">
+        <div class="page-card-icon">📱</div>
+        <div class="page-card-content">
+          <h4>Scan & Verify</h4>
+          <p>Scan winner tickets to verify they're legitimate before giving out prizes.</p>
+        </div>
+      </div>
+
+      <div class="page-card">
+        <div class="page-card-icon">📊</div>
+        <div class="page-card-content">
+          <h4>Dashboard</h4>
+          <p>View statistics about your raffle - how many tickets issued, claimed, winners drawn, etc.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-section" id="handout">
+      <h2>Handing Out Tickets</h2>
+
+      <h3>Creating Ticket Batches</h3>
+      <ol>
+        <li>Open the <strong>Hand Out</strong> page</li>
+        <li>Enter the number of tickets (1-20 per batch)</li>
+        <li>Optionally add a label (e.g., person's name, table number)</li>
+        <li>Click <strong>Create Batch</strong></li>
+        <li>A QR code appears - show this to the participant</li>
+      </ol>
+
+      <h3>Participant Registration</h3>
+      <p>When a participant scans the QR code:</p>
+      <ol>
+        <li>They see their ticket numbers</li>
+        <li>Their tickets are automatically registered (claimed)</li>
+        <li>They can save the page or add to home screen to keep their tickets</li>
+      </ol>
+
+      <div class="tip-box">
+        <strong>💡 Tip:</strong> Create batches with labels to help identify participants later. For example: "Table 5" or "John Smith".
+      </div>
+    </div>
+
+    <div class="guide-section" id="control">
+      <h2>Using the Control Panel</h2>
+      <p>The Control Panel is your command center. Here's what each state means:</p>
+
+      <h3>Session States</h3>
+      <ul>
+        <li><strong>OPEN</strong> - Registration is open. Participants can claim tickets.</li>
+        <li><strong>LOCKED</strong> - Registration closed. Ready to draw winners.</li>
+        <li><strong>DRAWING</strong> - A winner has been drawn and is being announced.</li>
+        <li><strong>CLOSED</strong> - Raffle has ended.</li>
+      </ul>
+
+      <h3>Control Actions</h3>
+      <ul>
+        <li><strong>Lock Registration</strong> - Stop accepting new ticket claims. Do this before drawing.</li>
+        <li><strong>Reopen Registration</strong> - Allow more participants to join (if needed).</li>
+        <li><strong>Draw Winner</strong> - Randomly select a winning ticket.</li>
+        <li><strong>Confirm Claim</strong> - Mark that the winner has received their prize.</li>
+        <li><strong>Redraw</strong> - Draw a different winner (if current winner doesn't claim).</li>
+        <li><strong>End Raffle</strong> - Close the session permanently.</li>
+      </ul>
+    </div>
+
+    <div class="guide-section" id="draw">
+      <h2>Running the Draw</h2>
+      <p>You have two ways to control the draw:</p>
+
+      <h3>Option 1: Control Panel (Recommended)</h3>
+      <p>Use the Control Panel on your phone while displaying the Draw Page on a projector:</p>
+      <ol>
+        <li>Open <strong>Draw Page</strong> on the projector/big screen</li>
+        <li>Open <strong>Control Panel</strong> on your phone</li>
+        <li>When ready, tap <strong>Lock Registration</strong></li>
+        <li>Tap <strong>Draw Winner</strong> - the animation plays on the big screen</li>
+        <li>Winner is announced with a 60-second countdown</li>
+        <li>When winner comes forward, tap <strong>Confirm Claim</strong></li>
+        <li>Repeat for more prizes</li>
+      </ol>
+
+      <h3>Option 2: Direct Draw Control</h3>
+      <p>Control the draw directly from the Draw Page (good for single-person operation):</p>
+      <ol>
+        <li>Open the <strong>Draw Page</strong></li>
+        <li>Use the buttons at the bottom of the screen</li>
+        <li>Tap <strong>Lock</strong> to close registration</li>
+        <li>Tap <strong>Draw</strong> to pick a winner</li>
+        <li>Use <strong>Confirm</strong> or <strong>Redraw</strong> as needed</li>
+      </ol>
+
+      <div class="tip-box">
+        <strong>💡 Multi-Device Setup:</strong> For the best experience, use separate devices:
+        <ul style="margin-top: 0.5rem;">
+          <li>Laptop/TV → Draw Page (audience view)</li>
+          <li>Phone → Control Panel (host controls)</li>
+          <li>Tablet → Hand Out page (registration desk)</li>
+          <li>Another phone → Scan page (prize distribution)</li>
+        </ul>
+      </div>
+
+      <h3>The 60-Second Countdown</h3>
+      <p>After a winner is drawn, a 60-second countdown begins. This gives the winner time to come forward. If they don't claim in time, you can:</p>
+      <ul>
+        <li><strong>Redraw</strong> - Pick a new winner (previous winner may or may not go back in the pool, based on your settings)</li>
+        <li><strong>Confirm Claim</strong> - If they made it, confirm and move on</li>
+      </ul>
+    </div>
+
+    <div class="guide-section" id="verify">
+      <h2>Verifying Winners</h2>
+      <p>Before giving out a prize, verify the winner's ticket:</p>
+      <ol>
+        <li>Open the <strong>Scan</strong> page</li>
+        <li>Point your camera at the winner's QR code</li>
+        <li>The system will show:
+          <ul>
+            <li><strong style="color: green;">✓ Valid Winner</strong> - Give them the prize!</li>
+            <li><strong style="color: red;">✗ Not a Winner</strong> - This ticket didn't win</li>
+            <li><strong style="color: red;">✗ Already Claimed</strong> - Prize was already given</li>
+            <li><strong style="color: red;">✗ Wrong Event</strong> - Ticket is for a different raffle</li>
+          </ul>
+        </li>
+        <li>Tap <strong>Mark as Claimed</strong> after giving the prize</li>
+      </ol>
+    </div>
+
+    <div class="guide-section" id="dashboard">
+      <h2>Monitoring with Dashboard</h2>
+      <p>The Dashboard provides a real-time overview of your raffle:</p>
+      <ul>
+        <li><strong>Batches</strong> - How many ticket batches created vs. claimed</li>
+        <li><strong>Tickets</strong> - Total tickets and how many are eligible for drawing</li>
+        <li><strong>Winners</strong> - How many winners drawn</li>
+        <li><strong>Claimed</strong> - How many prizes given out</li>
+      </ul>
+      <p>The dashboard also shows a table of all batches and winners, with their status.</p>
+
+      <h3>QR Codes</h3>
+      <p>Use the QR code tabs to quickly share links to different pages. Perfect for:</p>
+      <ul>
+        <li>Showing co-hosts how to access the Control Panel</li>
+        <li>Setting up additional devices</li>
+        <li>Sending links to remote participants</li>
+      </ul>
+    </div>
+
+    <div class="guide-section" id="tips">
+      <h2>Tips & Best Practices</h2>
+
+      <h3>Before the Event</h3>
+      <ul>
+        <li>Test the system with a few practice tickets</li>
+        <li>Set up your projector and test the Draw Page display</li>
+        <li>Prepare your devices and bookmark the pages</li>
+        <li>If using passcode, share it only with trusted co-hosts</li>
+      </ul>
+
+      <h3>During the Event</h3>
+      <ul>
+        <li>Have a dedicated person at the registration desk with the Hand Out page</li>
+        <li>Announce clearly when registration will close</li>
+        <li>Give winners enough time to come forward (the 60-second countdown helps)</li>
+        <li>Use the Scan page to verify winners before giving prizes</li>
+      </ul>
+
+      <h3>Troubleshooting</h3>
+      <ul>
+        <li><strong>Lost session code?</strong> Unfortunately, there's no recovery. Always save your code.</li>
+        <li><strong>Participant can't scan?</strong> Make sure they have camera permissions enabled.</li>
+        <li><strong>QR not working?</strong> Try increasing screen brightness or moving closer.</li>
+        <li><strong>Page not updating?</strong> Check your internet connection and refresh the page.</li>
+      </ul>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--color-border);">
+      <a href="/" class="btn btn-primary">Create a Raffle Now</a>
+      <p class="text-secondary" style="margin-top: 1rem; font-size: 0.875rem;">
+        Questions? The system auto-refreshes, so changes appear instantly across all devices.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
